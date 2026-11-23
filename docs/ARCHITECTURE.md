@@ -1,6 +1,6 @@
 # Architecture Overview
 
-**MediaKit** is a local-first Windows desktop application built with **Tauri 2**, **React 19**, **TypeScript**, and **Rust**. All media inspection, transcoding, image processing, and video downloads run locally via bundled sidecar executables (`ffmpeg`, `ffprobe`, and `yt-dlp`).
+**MediaKit** is a local-first desktop application (Windows & Linux) built with **Tauri 2**, **React 19**, **TypeScript**, and **Rust**. All media inspection, transcoding, image processing, and video downloads run locally via bundled sidecar executables (`ffmpeg`, `ffprobe`, and `yt-dlp`).
 
 ## End-to-End Job Flow
 

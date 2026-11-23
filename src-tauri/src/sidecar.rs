@@ -1,16 +1,22 @@
 use std::collections::VecDeque;
 use std::fs;
+#[cfg(windows)]
 use std::io::{Cursor, Read, Write};
 use std::path::{Path, PathBuf};
+#[cfg(windows)]
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
+#[cfg(windows)]
 use sha2::{Digest, Sha256};
 use tauri::async_runtime::Receiver;
-use tauri::{AppHandle, Emitter, Manager};
+#[cfg(windows)]
+use tauri::Emitter;
+use tauri::{AppHandle, Manager};
 use tauri_plugin_shell::process::{Command, CommandChild, CommandEvent, Output};
 use tauri_plugin_shell::ShellExt;
+#[cfg(windows)]
 use zip::ZipArchive;
 
 use crate::error::{AppError, AppResult};
@@ -18,20 +24,72 @@ use crate::worker::ffmpeg::invalidate_hw_cache;
 
 const MAX_TAIL_LINES: usize = 24;
 
+#[cfg(windows)]
 const FFMPEG_VERSION: &str = "9.1";
+#[cfg(windows)]
 const FFMPEG_URL: &str =
     "https://github.com/GyanD/codexffmpeg/releases/download/9.1/ffmpeg-9.1-essentials_build.zip";
+#[cfg(windows)]
 const FFMPEG_SHA256: &str = "b9bbbb3acece000cbeec994f856649354e52c773807841e78908374b24d658fd";
 
+#[cfg(windows)]
 const YTDLP_VERSION: &str = "2026.10.26";
+#[cfg(windows)]
 const YTDLP_URL: &str = "https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.26/yt-dlp.exe";
+#[cfg(windows)]
 const YTDLP_SHA256: &str = "f5389d3698ecde4ef06f4e6b1ce0294fe9ac1396228c8990b8d3416d6d177a7d";
 
+fn bin_filename(name: &str) -> String {
+    if cfg!(windows) {
+        format!("{name}.exe")
+    } else {
+        name.to_string()
+    }
+}
+
+fn target_triple() -> &'static str {
+    #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
+    {
+        "x86_64-pc-windows-msvc"
+    }
+    #[cfg(all(target_os = "windows", target_arch = "aarch64"))]
+    {
+        "aarch64-pc-windows-msvc"
+    }
+    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+    {
+        "x86_64-unknown-linux-gnu"
+    }
+    #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+    {
+        "aarch64-unknown-linux-gnu"
+    }
+    #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+    {
+        "x86_64-apple-darwin"
+    }
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    {
+        "aarch64-apple-darwin"
+    }
+}
+
+#[cfg(not(windows))]
+fn find_in_path(bin_name: &str) -> Option<PathBuf> {
+    let path_var = std::env::var_os("PATH")?;
+    std::env::split_paths(&path_var)
+        .map(|dir| dir.join(bin_name))
+        .find(|candidate| candidate.is_file())
+}
+
 static CONFIG_CACHE: Mutex<Option<SidecarConfig>> = Mutex::new(None);
+#[cfg(windows)]
 static REPAIR_ACTIVE: AtomicBool = AtomicBool::new(false);
 
+#[cfg(windows)]
 struct RepairGuard;
 
+#[cfg(windows)]
 impl RepairGuard {
     fn try_acquire() -> Option<Self> {
         REPAIR_ACTIVE
@@ -41,6 +99,7 @@ impl RepairGuard {
     }
 }
 
+#[cfg(windows)]
 impl Drop for RepairGuard {
     fn drop(&mut self) {
         REPAIR_ACTIVE.store(false, Ordering::SeqCst);
@@ -81,6 +140,7 @@ pub struct SidecarStatusReport {
     pub items: Vec<SidecarInfo>,
 }
 
+#[cfg(windows)]
 #[derive(Debug, Clone, Serialize)]
 pub struct SidecarRepairProgress {
     pub component: String,
@@ -176,12 +236,14 @@ fn resolve_from_parts(
     repaired_dir: Option<&Path>,
     name: &str,
 ) -> (SidecarSource, Option<PathBuf>) {
+    let bin_name = bin_filename(name);
+
     if let Some(custom_exe) = custom_exe_for(config, name) {
         let p = PathBuf::from(custom_exe);
         if p.is_file() {
             return (SidecarSource::Custom, Some(p));
         }
-        let nested = p.join(format!("{name}.exe"));
+        let nested = p.join(&bin_name);
         if nested.is_file() {
             return (SidecarSource::Custom, Some(nested));
         }
@@ -189,14 +251,14 @@ fn resolve_from_parts(
     }
 
     if let Some(dir) = config.custom_dir.as_deref() {
-        let candidate = Path::new(dir).join(format!("{name}.exe"));
+        let candidate = Path::new(dir).join(&bin_name);
         if candidate.is_file() {
             return (SidecarSource::Custom, Some(candidate));
         }
     }
 
     if let Some(dir) = repaired_dir {
-        let candidate = dir.join(format!("{name}.exe"));
+        let candidate = dir.join(&bin_name);
         if candidate.is_file() {
             return (SidecarSource::Repaired, Some(candidate));
         }
@@ -205,6 +267,11 @@ fn resolve_from_parts(
     let bundled = bundled_sidecar_path(name);
     if bundled.is_file() {
         return (SidecarSource::Bundled, Some(bundled));
+    }
+
+    #[cfg(not(windows))]
+    if let Some(system_bin) = find_in_path(&bin_name) {
+        return (SidecarSource::Bundled, Some(system_bin));
     }
 
     (SidecarSource::Missing, None)
@@ -219,7 +286,19 @@ fn resolve_command(app: &AppHandle, name: &'static str) -> AppResult<Command> {
         (SidecarSource::Custom | SidecarSource::Repaired, Some(exe)) => {
             Ok(app.shell().command(exe))
         }
-        (SidecarSource::Bundled, _) => {
+        (SidecarSource::Bundled, Some(exe)) => {
+            if bundled_sidecar_path(name).is_file() {
+                app.shell()
+                    .sidecar(name)
+                    .map_err(|err| AppError::SidecarUnavailable {
+                        name,
+                        detail: err.to_string(),
+                    })
+            } else {
+                Ok(app.shell().command(exe))
+            }
+        }
+        (SidecarSource::Bundled, None) => {
             app.shell()
                 .sidecar(name)
                 .map_err(|err| AppError::SidecarUnavailable {
@@ -313,13 +392,14 @@ fn format_sidecar_error(
         .and_then(|n| n.to_str())
         .unwrap_or(name);
 
+    let expected_bin = bin_filename(name);
     match source {
         SidecarSource::Custom => {
             let problem = format!(
                 "O arquivo selecionado ('{filename}') não é o {name} genuíno ou falhou ao responder ao teste de versão."
             );
             let solution = format!(
-                "Clique em 'Limpar' ao lado do campo para voltar a usar o binário padrão do aplicativo ou selecione o arquivo {name}.exe correto."
+                "Clique em 'Limpar' ao lado do campo para voltar a usar o binário padrão do aplicativo ou selecione o arquivo {expected_bin} correto."
             );
             (problem, solution)
         }
@@ -330,16 +410,14 @@ fn format_sidecar_error(
                     p.display()
                 )
             } else {
-                format!("O executável {name}.exe não foi encontrado na pasta do aplicativo (pode ter sido apagado ou bloqueado).")
+                format!("O executável {expected_bin} não foi encontrado na pasta do aplicativo (pode ter sido apagado ou bloqueado).")
             };
             let solution = "Clique no botão 'Auto-reparar' para baixar e restaurar os componentes automaticamente.".to_string();
             (problem, solution)
         }
         SidecarSource::Bundled | SidecarSource::Repaired => {
-            let problem = format!(
-                "Falha ao executar o {name} integrado: {raw_error}. O Windows Defender ou antivírus pode estar bloqueando a execução."
-            );
-            let solution = "Adicione uma exceção para o aplicativo no seu antivírus ou clique em 'Auto-reparar' para reinstalar os componentes.".to_string();
+            let problem = format!("Falha ao executar o {name} integrado: {raw_error}.");
+            let solution = "Verifique as permissões do executável ou clique em 'Auto-reparar' para reinstalar os componentes.".to_string();
             (problem, solution)
         }
     }
@@ -437,6 +515,7 @@ async fn check_single_sidecar(
     }
 }
 
+#[cfg(windows)]
 fn emit_repair_progress(
     app: &AppHandle,
     component: &str,
@@ -455,6 +534,7 @@ fn emit_repair_progress(
     );
 }
 
+#[cfg(windows)]
 async fn download_and_verify(
     app: &AppHandle,
     client: &reqwest::Client,
@@ -529,6 +609,7 @@ async fn download_and_verify(
     Ok(buffer)
 }
 
+#[cfg(windows)]
 fn extract_ffmpeg_zip(zip_bytes: Vec<u8>, dest_dir: &Path) -> AppResult<()> {
     fs::create_dir_all(dest_dir)?;
     let cursor = Cursor::new(zip_bytes);
@@ -586,7 +667,19 @@ fn extract_ffmpeg_zip(zip_bytes: Vec<u8>, dest_dir: &Path) -> AppResult<()> {
     Ok(())
 }
 
+/// Downloads and verifies missing sidecars into `$APPLOCALDATA/binaries` (Windows only).
+#[cfg(not(windows))]
+pub async fn repair_sidecars(
+    _app: &AppHandle,
+    _targets: Option<Vec<String>>,
+) -> AppResult<SidecarStatusReport> {
+    Err(AppError::message(
+        "Auto-reparo automático é suportado apenas no Windows. No Linux/macOS, instale ffmpeg e yt-dlp pelo gerenciador de pacotes do sistema ou selecione os executáveis manualmente.",
+    ))
+}
+
 /// Downloads and verifies missing sidecars into `$APPLOCALDATA/binaries`.
+#[cfg(windows)]
 pub async fn repair_sidecars(
     app: &AppHandle,
     targets: Option<Vec<String>>,
@@ -613,7 +706,7 @@ pub async fn repair_sidecars(
     fs::create_dir_all(&dest_dir)?;
 
     let client = reqwest::Client::builder()
-        .user_agent("mediakit-app/0.1.0")
+        .user_agent(concat!("mediakit-app/", env!("CARGO_PKG_VERSION")))
         .build()
         .map_err(|e| AppError::message(format!("Erro ao iniciar cliente HTTP: {e}")))?;
 
@@ -788,13 +881,13 @@ pub fn bundled_sidecar_path(name: &str) -> PathBuf {
         .and_then(|exe| exe.parent().map(Path::to_path_buf))
         .unwrap_or_else(|| PathBuf::from("."));
 
-    let plain = dir.join(format!("{name}.exe"));
+    let plain = dir.join(bin_filename(name));
     if plain.is_file() {
         return plain;
     }
 
-    let triple_name = format!("{name}-x86_64-pc-windows-msvc.exe");
-    let suffixed = dir.join(triple_name);
+    let triple_name = format!("{name}-{}", target_triple());
+    let suffixed = dir.join(bin_filename(&triple_name));
     if suffixed.is_file() {
         return suffixed;
     }
@@ -825,10 +918,10 @@ mod tests {
         fs::create_dir_all(&custom_dir).unwrap();
         fs::create_dir_all(&repaired_dir).unwrap();
 
-        let explicit_exe = root.join("my-ffmpeg.exe");
-        let dir_exe = custom_dir.join("ffmpeg.exe");
-        let rep_exe = repaired_dir.join("ffmpeg.exe");
-        let rep_probe = repaired_dir.join("ffprobe.exe");
+        let explicit_exe = root.join(bin_filename("my-ffmpeg"));
+        let dir_exe = custom_dir.join(bin_filename("ffmpeg"));
+        let rep_exe = repaired_dir.join(bin_filename("ffmpeg"));
+        let rep_probe = repaired_dir.join(bin_filename("ffprobe"));
         fs::write(&explicit_exe, b"exe").unwrap();
         fs::write(&dir_exe, b"dir").unwrap();
         fs::write(&rep_exe, b"rep").unwrap();
@@ -847,7 +940,7 @@ mod tests {
 
         let (src_probe, path_probe) = resolve_from_parts(&config, Some(&repaired_dir), "ffprobe");
         assert_eq!(src_probe, SidecarSource::Repaired);
-        assert_eq!(path_probe, Some(repaired_dir.join("ffprobe.exe")));
+        assert_eq!(path_probe, Some(repaired_dir.join(bin_filename("ffprobe"))));
 
         let _ = fs::remove_dir_all(root);
     }
@@ -857,7 +950,7 @@ mod tests {
         let root = temp_test_dir("dir");
         let custom_dir = root.join("bin");
         fs::create_dir_all(&custom_dir).unwrap();
-        let ytdlp = custom_dir.join("yt-dlp.exe");
+        let ytdlp = custom_dir.join(bin_filename("yt-dlp"));
         fs::write(&ytdlp, b"yt").unwrap();
 
         let config = SidecarConfig {
@@ -875,7 +968,7 @@ mod tests {
     #[test]
     fn custom_invalid_exe_marks_missing_without_fallback() {
         let root = temp_test_dir("invalid");
-        let invalid_exe = root.join("nao_existe.exe");
+        let invalid_exe = root.join(bin_filename("nao_existe"));
 
         let config_exe = SidecarConfig {
             ffmpeg_path: Some(invalid_exe.to_string_lossy().into_owned()),
