@@ -1,7 +1,7 @@
 <div align="center">
   <img src="src-tauri/icons/128x128.png" alt="MediaKit Logo" width="96" height="96" />
   <h1>MediaKit</h1>
-  <p>Local-first Windows desktop app for video, audio, and image compression/conversion and media downloads.</p>
+  <p>Local-first desktop app (Windows &amp; Linux) for video, audio, and image compression/conversion and media downloads.</p>
 
   <p>
     <a href="https://github.com/felipedssantos/mediakit/actions/workflows/ci.yml">
@@ -13,7 +13,7 @@
     <a href="LICENSE">
       <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License" />
     </a>
-    <img src="https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078D6" alt="Windows 10/11 x64" />
+    <img src="https://img.shields.io/badge/platform-Windows%2010%2F11%20%7C%20Linux%20x64-0078D6" alt="Windows 10/11 | Linux x64" />
   </p>
 
   <p>
@@ -100,17 +100,37 @@ Watch in full quality: [MP4](https://github.com/felipedssantos/mediakit/releases
 
 ## Installation
 
-1. Download the latest Windows installer (`MediaKit_<version>_x64-setup.exe`) from the [GitHub Releases](https://github.com/felipedssantos/mediakit/releases/latest) page.
+Download the installer for your OS from the [GitHub Releases](https://github.com/felipedssantos/mediakit/releases/latest) page.
+
+### Windows
+
+1. Download `MediaKit_<version>_x64-setup.exe`.
 2. _(Optional)_ Verify the SHA-256 checksum against `SHA256SUMS.txt` attached to the release:
 
 ```powershell
-Get-FileHash .\MediaKit_0.1.0_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\MediaKit_0.2.0_x64-setup.exe -Algorithm SHA256
 ```
 
 3. Run the installer and follow the setup wizard.
    - **Windows SmartScreen**: Current installers are unsigned. If Windows displays _"Windows protected your PC"_, click **More info** -> **Run anyway**.
 4. **Requirements**: Windows 10 or 11 (x64) and Microsoft Edge WebView2 (pre-installed on Windows 10/11).
 5. **Uninstall**: Open Windows **Settings** -> **Apps** -> **Installed apps**, select **MediaKit**, and click **Uninstall**.
+
+### Linux (x64)
+
+- **Debian / Ubuntu (`.deb`)**:
+
+```bash
+sha256sum -c SHA256SUMS.txt --ignore-missing
+sudo apt install ./MediaKit_0.2.0_amd64.deb
+```
+
+- **Portable (`.AppImage`)**:
+
+```bash
+chmod +x MediaKit_0.2.0_amd64.AppImage
+./MediaKit_0.2.0_amd64.AppImage
+```
 
 ## Quick Usage Guide
 
@@ -123,11 +143,11 @@ Get-FileHash .\MediaKit_0.1.0_x64-setup.exe -Algorithm SHA256
 
 ### Prerequisites
 
-- **OS**: Windows 10 or 11 (x64)
+- **OS**: Windows 10 or 11 (x64), or Linux x64 (Ubuntu 24.04+ recommended)
 - **[Node.js 20+](https://nodejs.org/)** (`npm` is used by this repository)
 - **[Rust (stable)](https://www.rust-lang.org/tools/install)** via `rustup`
-- **[Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)** with the **Desktop development with C++** workload
-- **[WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)** (pre-installed on Windows 10/11)
+- **Windows**: [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (C++ workload) and WebView2 Runtime
+- **Linux**: `libwebkit2gtk-4.1-dev`, `build-essential`, `clang`, `libclang-dev`, `libpipewire-0.3-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`, `libssl-dev`, `libxdo-dev`, `patchelf` (see `scripts/Dockerfile.linux`)
 
 ### Setup & Development
 
@@ -162,10 +182,22 @@ Make sure the sidecar binaries are present in `src-tauri/binaries/` (`ffmpeg:dow
 npm run tauri build
 ```
 
-The NSIS Windows installer is generated at:
+The installers are generated at:
 
 ```text
+# Windows
 src-tauri/target/release/bundle/nsis/MediaKit_<version>_x64-setup.exe
+
+# Linux
+src-tauri/target/release/bundle/deb/MediaKit_<version>_amd64.deb
+src-tauri/target/release/bundle/appimage/MediaKit_<version>_amd64.AppImage
+```
+
+You can also build the Linux bundles from Windows using Docker:
+
+```powershell
+docker build -t mediakit-linux-builder -f scripts/Dockerfile.linux scripts
+docker run --rm -v "${PWD}:/src:ro" -v "${PWD}/dist-linux:/out" -v "${PWD}/scripts/build-linux.sh:/build-linux.sh:ro" mediakit-linux-builder bash -c "sed 's/\r$//' /build-linux.sh | bash"
 ```
 
 ## Available Scripts
@@ -181,7 +213,7 @@ src-tauri/target/release/bundle/nsis/MediaKit_<version>_x64-setup.exe
 | `npm run typecheck`       | Runs TypeScript type checking (`tsc --noEmit`)                          |
 | `npm test`                | Runs frontend unit tests with Vitest                                    |
 | `npm run tauri dev`       | Starts full desktop app (frontend + Rust backend)                       |
-| `npm run tauri build`     | Builds Windows installer (NSIS)                                         |
+| `npm run tauri build`     | Builds OS installers (NSIS on Windows; `.deb` & `.AppImage` on Linux)  |
 | `npm run ffmpeg:download` | Downloads `ffmpeg` and `ffprobe` into `src-tauri/binaries/`             |
 | `npm run ytdlp:download`  | Downloads `yt-dlp` into `src-tauri/binaries/`                           |
 
@@ -226,7 +258,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the end-to-end job flow and
 
 - **Windows SmartScreen blocks the installer**: The installer is unsigned. Click **More info** -> **Run anyway**, and verify the file hash against `SHA256SUMS.txt` from the release page.
 - **GPU compression (`gpu_nvenc`) fails or is unavailable**: Hardware encoding requires a compatible GPU (such as an NVIDIA card with up-to-date drivers for `h264_nvenc`). Switch to a CPU preset (`Compress for Sharing` or `Compress with Quality`) if your system has no supported hardware encoder.
-- **Media download fails on certain videos**: Some platforms require authentication or frequent `yt-dlp` updates. Enable browser cookies in the downloader options, or update/repair the `yt-dlp` sidecar from **Settings** (or re-run `npm run ytdlp:download` when building from source).
+- **Media download fails on certain videos**: Some platforms require authentication or frequent `yt-dlp` updates. Enable browser cookies in the downloader options, or update/repair the `yt-dlp` sidecar from **Settings** (automatic repair is Windows-only; on Linux, update `yt-dlp` via your package manager or point to a custom binary in **Settings**).
 - **`tauri dev` / `tauri build` fails with missing sidecar binaries**: Run `npm run ffmpeg:download` and `npm run ytdlp:download` so `ffmpeg`, `ffprobe`, and `yt-dlp` exist under `src-tauri/binaries/`.
 
 ## Changelog

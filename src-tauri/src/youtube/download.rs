@@ -45,6 +45,7 @@ pub async fn run_download(
         "--no-playlist".into(),
         "--newline".into(),
         "--progress".into(),
+        #[cfg(windows)]
         "--windows-filenames".into(),
         "--no-mtime".into(),
         "--retries".into(),

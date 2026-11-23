@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-11-23
+
+### Added
+
+- Linux x64 support with `.deb` and `.AppImage` bundle targets in Tauri config.
+- Cross-platform sidecar binary resolution (`ffmpeg`, `ffprobe`, `yt-dlp`) without hardcoded `.exe` extensions and automatic `PATH` fallback on Linux/macOS.
+- Browser cookie profile path detection for Linux (`$XDG_CONFIG_HOME` / `~/.config`, `~/.mozilla/firefox`) and macOS (`~/Library/Application Support`).
+- Linux CI job (`ubuntu-24.04`) running `rustfmt`, `clippy`, and `cargo test`.
+- Docker-based Linux build environment (`scripts/Dockerfile.linux` and `scripts/build-linux.sh`).
+
+### Changed
+
+- Restricted Windows-only sidecar auto-repair (`GyanD/codexffmpeg` / `yt-dlp.exe`), `--windows-filenames`, and `.exe` file picker filters to Windows targets.
+- Updated UI labels across all locales (`en`, `pt-BR`, `pt-PT`, `es`, `fr`) to use OS-neutral terminology.
+
 ## [0.1.0] - 2026-11-23
 
 ### Added
@@ -17,4 +32,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Experimental screenshot & annotation overlay (`SCREENSHOT_ENABLED = false` by default).
 - Open-source repository setup: MIT license, contributing guidelines, code of conduct, security policy, CI workflow, ESLint/Prettier/Vitest, `rustfmt`/Clippy, pinned sidecar SHA-256 downloads, and architecture docs.
 
+[0.2.0]: https://github.com/felipedssantos/mediakit/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/felipedssantos/mediakit/releases/tag/v0.1.0

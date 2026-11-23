@@ -291,7 +291,7 @@ export const ptPT: Translations = {
       "Na dúvida, escolha MP3 — funciona no telemóvel, no carro e no computador.",
     audioM4a: "M4A (boa qualidade)",
     audioMp3: "MP3 (abre em qualquer lado)",
-    windowsVideosDir: "Pasta Vídeos do Windows",
+    windowsVideosDir: "Pasta Vídeos do sistema",
     batchDirHint:
       "Todos os ficheiros desta fila serão guardados nesta pasta.",
     downloadSingle: "Transferir vídeo",
@@ -322,7 +322,7 @@ export const ptPT: Translations = {
     howHint:
       "Copiar e guardar na sobreposição não apaga o histórico. O ficheiro fica na app para reabrir depois.",
     stepDir: "Pasta de destino",
-    windowsPicturesDir: "Pasta Imagens do Windows",
+    windowsPicturesDir: "Pasta Imagens do sistema",
     dirHint:
       "Guardar na sobreposição e nesta página envia o ficheiro para esta pasta.",
     stepHistory: "Capturas feitas",
@@ -485,7 +485,7 @@ export const ptPT: Translations = {
     dismissLabel: "Fechar aviso",
     sectionTitle: "Componentes (FFmpeg e yt-dlp)",
     sectionDetail:
-      "Estado dos executáveis de multimédia. Use o auto-reparo para transferir ou aponte uma pasta ou .exe externo.",
+      "Estado dos executáveis de multimédia. Use o auto-reparo para transferir ou aponte uma pasta ou binário externo.",
     checkButton: "Verificar novamente",
     checkingButton: "A verificar...",
     repairSuccess: "Componentes verificados e reparados com sucesso.",
@@ -495,14 +495,14 @@ export const ptPT: Translations = {
     sourceMissing: "Indisponível",
     customDirLabel: "Pasta externa de binários",
     customDirHint:
-      "Pasta com ffmpeg.exe, ffprobe.exe e yt-dlp.exe (opcional).",
+      "Pasta com ffmpeg, ffprobe e yt-dlp (opcional).",
     customDirPlaceholder: "A usar binários padrão da app",
     pickFolder: "Escolher pasta",
-    pickExe: "Escolher .exe",
+    pickExe: "Escolher binário",
     clearPath: "Limpar",
     customExeSection: "Executáveis individuais (opcional)",
-    ffmpegExeLabel: "Caminho do ffmpeg.exe",
-    ffprobeExeLabel: "Caminho do ffprobe.exe",
-    ytdlpExeLabel: "Caminho do yt-dlp.exe",
+    ffmpegExeLabel: "Caminho do ffmpeg",
+    ffprobeExeLabel: "Caminho do ffprobe",
+    ytdlpExeLabel: "Caminho do yt-dlp",
   },
 };

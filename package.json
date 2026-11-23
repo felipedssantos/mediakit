@@ -1,8 +1,8 @@
 {
   "name": "mediakit",
   "private": true,
-  "version": "0.1.0",
-  "description": "Windows desktop app for local video/image conversion and media downloads",
+  "version": "0.2.0",
+  "description": "Cross-platform desktop app (Windows & Linux) for local video/image conversion and media downloads",
   "author": "Felipe Dumont",
   "license": "MIT",
   "repository": {

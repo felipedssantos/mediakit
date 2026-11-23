@@ -101,71 +101,181 @@ fn exists_dir(path: PathBuf) -> Option<PathBuf> {
     path.is_dir().then_some(path)
 }
 
+#[cfg(not(windows))]
+fn config_base_dir() -> Option<PathBuf> {
+    #[cfg(target_os = "linux")]
+    {
+        if let Some(xdg) = env_dir("XDG_CONFIG_HOME") {
+            return Some(xdg);
+        }
+        return env_dir("HOME").map(|h| h.join(".config"));
+    }
+    #[cfg(target_os = "macos")]
+    {
+        return env_dir("HOME").map(|h| h.join("Library").join("Application Support"));
+    }
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+    {
+        None
+    }
+}
+
 fn chrome_dir() -> Option<PathBuf> {
-    exists_dir(
-        env_dir("LOCALAPPDATA")?
-            .join("Google")
-            .join("Chrome")
-            .join("User Data"),
-    )
+    #[cfg(windows)]
+    {
+        exists_dir(
+            env_dir("LOCALAPPDATA")?
+                .join("Google")
+                .join("Chrome")
+                .join("User Data"),
+        )
+    }
+    #[cfg(target_os = "linux")]
+    {
+        exists_dir(config_base_dir()?.join("google-chrome"))
+    }
+    #[cfg(target_os = "macos")]
+    {
+        exists_dir(config_base_dir()?.join("Google").join("Chrome"))
+    }
 }
 
 fn edge_dir() -> Option<PathBuf> {
-    exists_dir(
-        env_dir("LOCALAPPDATA")?
-            .join("Microsoft")
-            .join("Edge")
-            .join("User Data"),
-    )
+    #[cfg(windows)]
+    {
+        exists_dir(
+            env_dir("LOCALAPPDATA")?
+                .join("Microsoft")
+                .join("Edge")
+                .join("User Data"),
+        )
+    }
+    #[cfg(target_os = "linux")]
+    {
+        exists_dir(config_base_dir()?.join("microsoft-edge"))
+    }
+    #[cfg(target_os = "macos")]
+    {
+        exists_dir(config_base_dir()?.join("Microsoft Edge"))
+    }
 }
 
 fn firefox_dir() -> Option<PathBuf> {
-    exists_dir(
-        env_dir("APPDATA")?
-            .join("Mozilla")
-            .join("Firefox")
-            .join("Profiles"),
-    )
+    #[cfg(windows)]
+    {
+        exists_dir(
+            env_dir("APPDATA")?
+                .join("Mozilla")
+                .join("Firefox")
+                .join("Profiles"),
+        )
+    }
+    #[cfg(target_os = "linux")]
+    {
+        exists_dir(env_dir("HOME")?.join(".mozilla").join("firefox"))
+    }
+    #[cfg(target_os = "macos")]
+    {
+        exists_dir(config_base_dir()?.join("Firefox").join("Profiles"))
+    }
 }
 
 fn brave_dir() -> Option<PathBuf> {
-    exists_dir(
-        env_dir("LOCALAPPDATA")?
-            .join("BraveSoftware")
-            .join("Brave-Browser")
-            .join("User Data"),
-    )
+    #[cfg(windows)]
+    {
+        exists_dir(
+            env_dir("LOCALAPPDATA")?
+                .join("BraveSoftware")
+                .join("Brave-Browser")
+                .join("User Data"),
+        )
+    }
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    {
+        exists_dir(
+            config_base_dir()?
+                .join("BraveSoftware")
+                .join("Brave-Browser"),
+        )
+    }
 }
 
 fn opera_dir() -> Option<PathBuf> {
-    exists_dir(
-        env_dir("APPDATA")?
-            .join("Opera Software")
-            .join("Opera Stable"),
-    )
+    #[cfg(windows)]
+    {
+        exists_dir(
+            env_dir("APPDATA")?
+                .join("Opera Software")
+                .join("Opera Stable"),
+        )
+    }
+    #[cfg(target_os = "linux")]
+    {
+        exists_dir(config_base_dir()?.join("opera"))
+    }
+    #[cfg(target_os = "macos")]
+    {
+        exists_dir(config_base_dir()?.join("com.operasoftware.Opera"))
+    }
 }
 
 fn opera_gx_dir() -> Option<PathBuf> {
-    exists_dir(
-        env_dir("APPDATA")?
-            .join("Opera Software")
-            .join("Opera GX Stable"),
-    )
+    #[cfg(windows)]
+    {
+        exists_dir(
+            env_dir("APPDATA")?
+                .join("Opera Software")
+                .join("Opera GX Stable"),
+        )
+    }
+    #[cfg(target_os = "macos")]
+    {
+        exists_dir(config_base_dir()?.join("com.operasoftware.OperaGX"))
+    }
+    #[cfg(target_os = "linux")]
+    {
+        None
+    }
 }
 
 fn vivaldi_dir() -> Option<PathBuf> {
-    exists_dir(env_dir("LOCALAPPDATA")?.join("Vivaldi").join("User Data"))
+    #[cfg(windows)]
+    {
+        exists_dir(env_dir("LOCALAPPDATA")?.join("Vivaldi").join("User Data"))
+    }
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    {
+        exists_dir(config_base_dir()?.join("vivaldi"))
+    }
 }
 
 fn chromium_dir() -> Option<PathBuf> {
-    exists_dir(env_dir("LOCALAPPDATA")?.join("Chromium").join("User Data"))
+    #[cfg(windows)]
+    {
+        exists_dir(env_dir("LOCALAPPDATA")?.join("Chromium").join("User Data"))
+    }
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    {
+        exists_dir(config_base_dir()?.join("chromium"))
+    }
 }
 
 fn whale_dir() -> Option<PathBuf> {
-    exists_dir(
-        env_dir("LOCALAPPDATA")?
-            .join("Naver")
-            .join("Naver Whale")
-            .join("User Data"),
-    )
+    #[cfg(windows)]
+    {
+        exists_dir(
+            env_dir("LOCALAPPDATA")?
+                .join("Naver")
+                .join("Naver Whale")
+                .join("User Data"),
+        )
+    }
+    #[cfg(target_os = "macos")]
+    {
+        exists_dir(config_base_dir()?.join("Naver").join("Whale"))
+    }
+    #[cfg(target_os = "linux")]
+    {
+        None
+    }
 }
