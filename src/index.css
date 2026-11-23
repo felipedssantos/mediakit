@@ -1,0 +1,318 @@
+@import "@fontsource/archivo-narrow/latin-400.css";
+@import "@fontsource/archivo-narrow/latin-500.css";
+@import "@fontsource/archivo-narrow/latin-600.css";
+@import "@fontsource/archivo-narrow/latin-700.css";
+@import "@fontsource/chivo-mono/latin-400.css";
+@import "@fontsource/chivo-mono/latin-500.css";
+@import "@fontsource/chivo-mono/latin-700.css";
+@import "tailwindcss";
+
+@theme {
+  --font-board: "Archivo Narrow", "Arial Narrow", sans-serif;
+  --font-cell: "Chivo Mono", ui-monospace, monospace;
+
+  /* Painel: face de aba preta fosca sobre vazio */
+  --color-void: #0e0e0e;
+  --color-flap: #17181a;
+  --color-flap-top: #1f2124;
+  --color-seam: #0a0a0b;
+
+  /* Moldura de aço escovado */
+  --color-steel: #3a3f44;
+  --color-steel-dim: #2a2e32;
+  --color-rule: #24272a;
+
+  /* Letra pintada */
+  --color-paint: #f2f2f2;
+  --color-paint-dim: #9aa0a6;
+  --color-paint-faint: #6b7075;
+
+  /* Lâmpadas de linha */
+  --color-lamp: #e6a417;
+  --color-fault: #d1442a;
+  --color-cleared: #7fa88c;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-board);
+  font-size: 15px;
+  background: var(--color-void);
+  color: var(--color-paint);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* As superfícies que o navegador desenha também pertencem ao painel. */
+::selection {
+  background: var(--color-lamp);
+  color: var(--color-void);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-steel) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--color-void);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-steel-dim);
+  border: 2px solid var(--color-void);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-steel);
+}
+
+input,
+textarea {
+  caret-color: var(--color-lamp);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-lamp);
+  outline-offset: 1px;
+}
+
+*[data-tauri-drag-region] {
+  app-region: drag;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  app-region: no-drag;
+}
+
+/* --- Materiais do painel --------------------------------------------- */
+
+/* Chapa de aço escovado: estriação real, não decoração. */
+.steel {
+  background-color: var(--color-steel-dim);
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.035) 0px,
+    rgba(255, 255, 255, 0.035) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* Face de aba: a costura horizontal no meio é o que a torna uma aba. */
+.flap-face {
+  position: relative;
+  background-color: var(--color-flap);
+  background-image: linear-gradient(
+    180deg,
+    var(--color-flap-top) 0%,
+    var(--color-flap-top) calc(50% - 1px),
+    var(--color-seam) calc(50% - 1px),
+    var(--color-seam) 50%,
+    var(--color-flap) 50%
+  );
+}
+
+/* Célula de caractere de largura fixa. */
+.cell {
+  font-family: var(--font-cell);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Rótulo estampado na moldura. */
+.stamp {
+  font-family: var(--font-board);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--color-paint-faint);
+}
+
+/* --- Movimento do painel ---------------------------------------------- */
+
+:root {
+  --ease-board: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes flap-turn {
+  0% {
+    transform: rotateX(0deg);
+    filter: brightness(1);
+  }
+  49% {
+    transform: rotateX(-88deg);
+    filter: brightness(0.35);
+  }
+  50% {
+    transform: rotateX(88deg);
+    filter: brightness(0.35);
+  }
+  100% {
+    transform: rotateX(0deg);
+    filter: brightness(1);
+  }
+}
+
+.flap-turn {
+  animation: flap-turn 130ms linear;
+  transform-origin: center center;
+  backface-visibility: hidden;
+}
+
+/* Lâmpada da linha em serviço: pulso lento, sem brilho difuso. */
+@keyframes lamp-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.lamp-pulse {
+  animation: lamp-pulse 1.6s steps(1, end) infinite;
+}
+
+/* Tela que entra: a chapa desce como uma aba. */
+@keyframes board-shutter {
+  from {
+    clip-path: inset(0 0 100% 0);
+    filter: brightness(0.45);
+  }
+  to {
+    clip-path: inset(0);
+    filter: brightness(1);
+  }
+}
+
+.board-shutter {
+  animation: board-shutter 240ms var(--ease-board) both;
+}
+
+/* Linha nova na fila: a aba cai no lugar. */
+@keyframes board-row-in {
+  from {
+    clip-path: inset(0 0 100% 0);
+    filter: brightness(0.5);
+  }
+  to {
+    clip-path: inset(0);
+    filter: brightness(1);
+  }
+}
+
+.board-row-in {
+  animation: board-row-in 200ms var(--ease-board) both;
+  animation-delay: var(--stagger, 0ms);
+}
+
+/* Espera: células viram e a lâmpada marcha da esquerda para a direita. */
+.board-wait {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  perspective: 64px;
+}
+
+.board-wait-cell {
+  display: block;
+  width: 0.55em;
+  height: 0.9em;
+  transform-origin: center center;
+  background-color: var(--color-steel-dim);
+  animation: flap-wait 720ms linear infinite;
+}
+
+@keyframes flap-wait {
+  0% {
+    transform: rotateX(0deg);
+    background-color: var(--color-steel-dim);
+  }
+  22% {
+    transform: rotateX(-86deg);
+    background-color: var(--color-seam);
+  }
+  28% {
+    transform: rotateX(86deg);
+    background-color: var(--color-lamp);
+  }
+  55%,
+  100% {
+    transform: rotateX(0deg);
+    background-color: var(--color-steel-dim);
+  }
+}
+
+.board-progress {
+  transform-origin: left center;
+  transition: transform 150ms linear;
+}
+
+/* Tinta dos controles: causa e efeito, sem levantar a peça. */
+.ink {
+  transition:
+    color 120ms var(--ease-board),
+    border-color 120ms var(--ease-board),
+    background-color 120ms var(--ease-board);
+}
+
+.ink:active:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+@keyframes board-toast-in {
+  from {
+    clip-path: inset(100% 0 0 0);
+    opacity: 0.4;
+  }
+  to {
+    clip-path: inset(0);
+    opacity: 1;
+  }
+}
+
+.board-toast {
+  animation: board-toast-in 220ms var(--ease-board) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flap-turn,
+  .lamp-pulse,
+  .board-shutter,
+  .board-row-in,
+  .board-toast,
+  .board-wait-cell {
+    animation: none;
+  }
+
+  .board-wait-cell {
+    background-color: var(--color-lamp);
+  }
+
+  .board-progress,
+  .ink {
+    transition-duration: 80ms;
+  }
+
+  .ink:active:not(:disabled) {
+    filter: none;
+  }
+}

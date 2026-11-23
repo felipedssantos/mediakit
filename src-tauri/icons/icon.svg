@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
+  <!-- C�lula de split-flap: chapa de a�o, aba fosca, costura, letra pintada, l�mpada. -->
+  <rect width="1024" height="1024" fill="#2a2e32"/>
+  <rect x="36" y="36" width="952" height="952" fill="#3a3f44"/>
+  <rect x="56" y="56" width="912" height="452" fill="#1f2124"/>
+  <rect x="56" y="516" width="912" height="452" fill="#17181a"/>
+  <rect x="56" y="508" width="912" height="8" fill="#0a0a0b"/>
+  <rect x="92" y="92" width="80" height="80" fill="#e6a417"/>
+  <path
+    d="M 748 292 A 292 292 0 1 0 748 732"
+    stroke="#f2f2f2"
+    stroke-width="148"
+    stroke-linecap="butt"
+  />
+</svg>

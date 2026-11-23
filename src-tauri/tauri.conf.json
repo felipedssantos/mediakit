@@ -1,0 +1,66 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Conversor",
+  "version": "0.1.0",
+  "identifier": "com.feliped.conversor",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Conversor",
+        "width": 1920,
+        "height": 1080,
+        "center": true,
+        "minWidth": 960,
+        "minHeight": 640,
+        "decorations": false,
+        "shadow": true,
+        "theme": "Dark"
+      },
+      {
+        "label": "snip-overlay",
+        "title": "Selecionar área",
+        "url": "index.html?snip=1",
+        "width": 400,
+        "height": 300,
+        "visible": false,
+        "decorations": false,
+        "transparent": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false,
+        "shadow": false,
+        "focus": false
+      }
+    ],
+    "security": {
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+          "scope": ["$TEMP/**", "$APPLOCALDATA/**", "$APPDATA/**"]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "nsis",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "externalBin": [
+      "binaries/ffmpeg",
+      "binaries/ffprobe",
+      "binaries/yt-dlp"
+    ]
+  }
+}
