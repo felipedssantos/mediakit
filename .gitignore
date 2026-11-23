@@ -14,6 +14,8 @@ instalador
 .vitest
 *.local
 docs/superpowers/
+media/out/*.mp4
+media/out/*.webm
 
 # Editor directories and files
 .vscode/*
