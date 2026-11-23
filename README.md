@@ -45,7 +45,7 @@ npm run ffmpeg:download
 npm run ytdlp:download
 ```
 
-> Os executáveis ficam ignorados pelo Git (`src-tauri/.gitignore`) e não devem ser commitados.
+> Os scripts usam versões fixas com verificação de checksum SHA-256. Os executáveis ficam ignorados pelo Git (`src-tauri/.gitignore`) e não devem ser commitados.
 
 3. Execute o app em modo de desenvolvimento:
 
