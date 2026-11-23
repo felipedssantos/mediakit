@@ -1,4 +1,4 @@
-import { ptBR } from "../../i18n/pt-BR";
+import { useT } from "../../hooks/useLocale";
 
 interface QualitySliderProps {
   value: number;
@@ -15,11 +15,14 @@ export function QualitySlider({
   label,
   onChange,
 }: QualitySliderProps) {
+  const t = useT();
   return (
     <div>
       <label className="flex items-baseline justify-between gap-3">
-        <span className="stamp text-paint-dim">{ptBR.common.qualityLabel}</span>
-        <span className="cell text-[11px] text-lamp">
+        <span className="text-xs font-medium text-ink-2">
+          {t.common.qualityLabel}
+        </span>
+        <span className="mono-num text-xs font-medium text-accent">
           {value} · {label}
         </span>
       </label>
@@ -29,7 +32,7 @@ export function QualitySlider({
         max={max}
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="mt-1.5 w-full accent-lamp"
+        className="mt-2 w-full accent-accent"
       />
     </div>
   );

@@ -1,79 +1,144 @@
-import type { CSSProperties } from "react";
+import {
+  Check,
+  FileAudio,
+  FileImage,
+  FileVideo,
+  Sparkles,
+  Zap,
+} from "lucide-react";
+import { useEffect, useRef } from "react";
 
+import { useT } from "../hooks/useLocale";
+import { animatePop, animateStaggerIn } from "../lib/motion";
 import type { PresetId } from "../lib/presets";
-
-const VIDEO_CODES: Record<PresetId, string> = {
-  compress_web: "C1",
-  compress_quality: "C2",
-  convert_mp4: "M4",
-  extract_audio: "AU",
-  gpu_nvenc: "GP",
-};
 
 export interface PresetOption<T extends string> {
   id: T;
   label: string;
   bestFor: string;
   usesGpu: boolean;
+  recommended?: boolean;
 }
 
 interface PresetSelectorProps<T extends string> {
   value: T;
   presets: PresetOption<T>[];
-  codes: Record<T, string>;
+  codes?: Record<T, string>;
   nvencAvailable?: boolean;
   onChange: (id: T) => void;
+}
+
+function PresetIcon({ id, usesGpu }: { id: string; usesGpu: boolean }) {
+  if (usesGpu) return <Zap size={16} />;
+  if (id === "extract_audio") return <FileAudio size={16} />;
+  if (
+    id.startsWith("img_") ||
+    id === "jpeg" ||
+    id === "png" ||
+    id === "webp" ||
+    id === "bmp" ||
+    id === "tiff"
+  ) {
+    return <FileImage size={16} />;
+  }
+  if (id.includes("compress")) return <Sparkles size={16} />;
+  return <FileVideo size={16} />;
 }
 
 export function PresetSelector<T extends string>({
   value,
   presets,
-  codes,
   nvencAvailable = true,
   onChange,
 }: PresetSelectorProps<T>) {
+  const t = useT();
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = gridRef.current;
+    if (!root) return;
+    return animateStaggerIn(root.querySelectorAll("[data-preset-card]"), {
+      y: 10,
+      scale: 0.985,
+      duration: 360,
+      staggerMs: 30,
+    });
+  }, []);
+
   return (
-    <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
-      {presets.map((preset, index) => {
+    <div
+      ref={gridRef}
+      className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
+    >
+      {presets.map((preset) => {
         const disabled = preset.usesGpu && !nvencAvailable;
         const selected = value === preset.id;
         return (
           <button
             key={preset.id}
             type="button"
+            data-preset-card
             disabled={disabled}
             aria-pressed={selected}
-            onClick={() => onChange(preset.id)}
-            className={`board-row-in ink flex min-h-28 flex-col border p-3 text-left ${
+            onClick={(event) => {
+              onChange(preset.id);
+              animatePop(event.currentTarget);
+            }}
+            className={`ui-card relative flex min-h-30 flex-col overflow-hidden rounded-2xl p-4 text-left ${
               selected
-                ? "border-lamp bg-flap-top"
-                : "border-rule bg-flap hover:border-lamp hover:bg-flap-top"
+                ? "surface-card-active"
+                : "surface-card hover:border-line-strong"
             } ${
               disabled
-                ? "cursor-not-allowed opacity-40 hover:border-rule hover:bg-flap"
+                ? "cursor-not-allowed opacity-50 hover:transform-none hover:border-line"
                 : ""
             }`}
-            style={{ "--stagger": `${index * 28}ms` } as CSSProperties}
           >
+            {selected && (
+              <span
+                aria-hidden
+                className="absolute inset-x-0 top-0 h-0.5 bg-accent"
+              />
+            )}
+
+            <div className="flex w-full items-center justify-between gap-2">
+              <span
+                className={`flex h-9 w-9 items-center justify-center rounded-xl border ${
+                  selected
+                    ? "border-accent/30 bg-accent text-accent-ink shadow-xs"
+                    : "border-line bg-elevated text-ink-2"
+                }`}
+              >
+                <PresetIcon id={preset.id} usesGpu={preset.usesGpu} />
+              </span>
+
+              <div className="flex items-center gap-1.5">
+                {preset.recommended && !disabled && (
+                  <span className="rounded-full border border-ok/25 bg-ok-soft px-2 py-0.5 text-[11px] font-semibold text-ok">
+                    {t.common.recommended}
+                  </span>
+                )}
+                {selected && (
+                  <span
+                    aria-hidden
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-ink shadow-xs"
+                  >
+                    <Check size={12} />
+                  </span>
+                )}
+              </div>
+            </div>
+
             <span
-              className={`cell w-fit border px-1.5 py-0.5 text-xs ${
-                selected
-                  ? "border-lamp text-lamp"
-                  : "border-steel-dim text-paint-faint"
-              }`}
-            >
-              {codes[preset.id]}
-            </span>
-            <span
-              className={`mt-2 text-sm font-semibold leading-5 ${
-                selected ? "text-lamp" : "text-paint"
+              className={`mt-3 text-sm font-bold leading-5 ${
+                selected ? "text-accent" : "text-ink"
               }`}
             >
               {preset.label}
             </span>
-            <span className="mt-1.5 flex-1 text-xs leading-5 text-paint-faint">
+            <span className="mt-1 flex-1 text-xs leading-5 text-ink-2">
               {disabled
-                ? "Placa NVIDIA não encontrada neste computador."
+                ? t.outputSettings.nvidiaUnavailable
                 : preset.bestFor}
             </span>
           </button>
@@ -98,7 +163,6 @@ export function VideoPresetSelector({
     <PresetSelector
       value={value}
       presets={presets}
-      codes={VIDEO_CODES}
       nvencAvailable={nvencAvailable}
       onChange={onChange}
     />

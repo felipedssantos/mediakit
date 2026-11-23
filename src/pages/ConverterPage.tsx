@@ -6,21 +6,20 @@ import {
   PresetSelector,
   VideoPresetSelector,
 } from "../components/PresetSelector";
-import { SectionRule } from "../components/SectionRule";
+import { StepHeader } from "../components/StepHeader";
 import { ConverterLayout } from "../components/converter/ConverterLayout";
 import { PendingFilesList } from "../components/converter/PendingFilesList";
+import { useAppSettings } from "../hooks/useAppSettings";
 import { useFileDrop } from "../hooks/useFileDrop";
 import { useJobEvents, useJobs } from "../hooks/useJobs";
+import { useT } from "../hooks/useLocale";
 import { useMediaInfo } from "../hooks/useMediaInfo";
-import { ptBR } from "../i18n/pt-BR";
 import { pickOutputDirectory, pickVideoFiles } from "../lib/api/files";
 import { suggestOutputPath } from "../lib/api/jobs";
 import {
-  AUDIO_OUTPUT_CODES,
   AUDIO_OUTPUT_FORMATS,
   VIDEO_COMPRESS_PRESETS,
   VIDEO_CONVERT_PRESETS,
-  VIDEO_OUTPUT_CODES,
   VIDEO_OUTPUT_FORMATS,
   formatBytes,
   formatDuration,
@@ -40,9 +39,21 @@ interface ConverterPageProps {
 }
 
 export function ConverterPage({ mode, onBack }: ConverterPageProps) {
+  const t = useT();
   const compress = mode === "compress";
-  const presets = compress ? VIDEO_COMPRESS_PRESETS : VIDEO_CONVERT_PRESETS;
-  const defaultPreset = (presets[0]?.id ?? "compress_web") as PresetId;
+  const presets = (
+    compress ? VIDEO_COMPRESS_PRESETS : VIDEO_CONVERT_PRESETS
+  ).map((item) => ({ ...item, ...t.presets[item.id] }));
+  const appSettings = useAppSettings.getState();
+  const initialCompressPreset =
+    presets.find((item) => item.id === appSettings.videoCompressPreset) ??
+    presets[0];
+  const defaultPreset = (
+    compress
+      ? (initialCompressPreset?.id ?? "compress_web")
+      : (presets[0]?.id ?? "convert_mp4")
+  ) as PresetId;
+  const initialPresetObj = presets.find((item) => item.id === defaultPreset);
 
   useJobEvents();
   const allJobs = useJobs((state) => state.jobs);
@@ -61,13 +72,23 @@ export function ConverterPage({ mode, onBack }: ConverterPageProps) {
 
   const { files, probing, addPaths, removePath, clear } = useMediaInfo();
   const [presetId, setPresetId] = useState<PresetId>(defaultPreset);
-  const [crf, setCrf] = useState(28);
+  const [crf, setCrf] = useState(initialPresetObj?.defaultCrf ?? 28);
   const [resolution, setResolution] = useState("original");
-  const [videoCodec, setVideoCodec] = useState("h264");
-  const [useGpu, setUseGpu] = useState(false);
-  const [videoContainer, setVideoContainer] = useState<VideoContainer>("mp4");
-  const [audioContainer, setAudioContainer] = useState<AudioContainer>("m4a");
-  const [outputDir, setOutputDir] = useState<string | null>(null);
+  const [videoCodec, setVideoCodec] = useState(
+    initialPresetObj?.videoCodec === "hevc" ? "hevc" : "h264",
+  );
+  const [useGpu, setUseGpu] = useState(
+    Boolean(initialPresetObj?.usesGpu || appSettings.preferGpu),
+  );
+  const [videoContainer, setVideoContainer] = useState<VideoContainer>(
+    appSettings.videoConvertContainer,
+  );
+  const [audioContainer, setAudioContainer] = useState<AudioContainer>(
+    appSettings.audioExtractContainer,
+  );
+  const [outputDir, setOutputDir] = useState<string | null>(
+    appSettings.defaultOutputDir,
+  );
   const [busy, setBusy] = useState(false);
 
   const validFiles = files.filter((file) => !file.error);
@@ -143,64 +164,76 @@ export function ConverterPage({ mode, onBack }: ConverterPageProps) {
   }
 
   const startLabel = busy
-    ? ptBR.common.queuing
-    : validFiles.length > 1
-      ? ptBR.converter.startMany(validFiles.length)
-      : ptBR.common.start;
+    ? t.common.queuing
+    : compress
+      ? validFiles.length > 1
+        ? t.converter.startManyCompress(validFiles.length)
+        : t.converter.startSingleCompress
+      : validFiles.length > 1
+        ? t.converter.startManyConvert(validFiles.length)
+        : t.converter.startSingleConvert;
+
+  const activePresetLabel = t.presets[presetId]?.label ?? "";
+  const summary =
+    validFiles.length > 0
+      ? `${t.common.filesCount(validFiles.length)} · ${formatBytes(totalBytes)} → ${activePresetLabel}`
+      : null;
 
   return (
     <ConverterLayout
       title={
         compress
-          ? ptBR.converter.compressTitle
-          : ptBR.converter.convertTitle
+          ? t.converter.compressTitle
+          : t.converter.convertTitle
       }
       detail={
         compress
-          ? ptBR.converter.compressDetail
-          : ptBR.converter.convertDetail
+          ? t.converter.compressDetail
+          : t.converter.convertDetail
       }
       error={error}
       onBack={onBack}
       dropSection={
-        <section className="grid shrink-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+        <section className="grid shrink-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
           <div className="flex min-h-0 flex-col">
-            <SectionRule step="01" title={ptBR.converter.stepChooseFiles} />
+            <StepHeader step="1" title={t.converter.stepChooseFiles} />
             <DropZone
               disabled={probing}
               probing={probing}
               compact={files.length > 0}
               onBrowse={() => void handleBrowse()}
-              title={ptBR.converter.dropTitle}
+              title={t.converter.dropTitle}
               hint={
                 compress
-                  ? ptBR.converter.dropCompressHint
-                  : ptBR.converter.dropConvertHint
+                  ? t.converter.dropCompressHint
+                  : t.converter.dropConvertHint
               }
+              formats={["MP4", "MKV", "MOV", "AVI", "WebM"]}
             />
           </div>
 
           <div className="flex min-h-0 flex-col">
-            <SectionRule
-              step={String(files.length).padStart(2, "0")}
-              title={ptBR.converter.selectedTitle}
+            <StepHeader
+              step={String(files.length)}
+              title={t.converter.selectedTitle}
             />
             <PendingFilesList
               files={files}
-              emptyMessage={ptBR.converter.noneSelected}
+              emptyMessage={t.converter.noneSelected}
               validCount={validFiles.length}
               totalBytes={totalBytes}
               formatMeta={(file) =>
                 `${formatDuration(file.info?.duration ?? 0)} · ${formatBytes(file.info?.size ?? 0)}`
               }
               onRemove={removePath}
+              onClearAll={clear}
             />
           </div>
         </section>
       }
       presetSection={
         <section className="shrink-0">
-          <SectionRule step="02" title={ptBR.converter.stepPreset} />
+          <StepHeader step="2" title={t.converter.stepPreset} />
           <VideoPresetSelector
             value={presetId}
             presets={presets}
@@ -209,23 +242,27 @@ export function ConverterPage({ mode, onBack }: ConverterPageProps) {
           />
           {!compress && (
             <div className="mt-4">
-              <p className="stamp mb-2 text-paint-dim">
+              <p className="mb-2 text-xs font-semibold text-ink-2">
                 {presetId === "extract_audio"
-                  ? ptBR.converter.saveAudioAs
-                  : ptBR.converter.convertTo}
+                  ? t.converter.saveAudioAs
+                  : t.converter.convertTo}
               </p>
               {presetId === "extract_audio" ? (
                 <PresetSelector
                   value={audioContainer}
-                  presets={AUDIO_OUTPUT_FORMATS}
-                  codes={AUDIO_OUTPUT_CODES}
+                  presets={AUDIO_OUTPUT_FORMATS.map((item) => ({
+                    ...item,
+                    ...t.audioFormats[item.id],
+                  }))}
                   onChange={setAudioContainer}
                 />
               ) : (
                 <PresetSelector
                   value={videoContainer}
-                  presets={VIDEO_OUTPUT_FORMATS}
-                  codes={VIDEO_OUTPUT_CODES}
+                  presets={VIDEO_OUTPUT_FORMATS.map((item) => ({
+                    ...item,
+                    ...t.videoFormats[item.id],
+                  }))}
                   onChange={setVideoContainer}
                 />
               )}
@@ -235,7 +272,7 @@ export function ConverterPage({ mode, onBack }: ConverterPageProps) {
       }
       settingsSection={
         <section>
-          <SectionRule step="03" title={ptBR.common.stepAdjustments} />
+          <StepHeader step="3" title={t.common.stepAdjustments} />
           <OutputSettings
             presetId={presetId}
             crf={crf}
@@ -258,17 +295,18 @@ export function ConverterPage({ mode, onBack }: ConverterPageProps) {
       busy={busy}
       canStart={validFiles.length > 0}
       startLabel={startLabel}
-      startHint={ptBR.converter.startHint}
+      startHint={t.converter.startHint}
+      summary={summary}
       onStart={() => void handleStart()}
       queueTitle={
         compress
-          ? ptBR.converter.queueCompressTitle
-          : ptBR.converter.queueConvertTitle
+          ? t.converter.queueCompressTitle
+          : t.converter.queueConvertTitle
       }
       queueEmpty={
         compress
-          ? ptBR.converter.queueCompressEmpty
-          : ptBR.converter.queueConvertEmpty
+          ? t.converter.queueCompressEmpty
+          : t.converter.queueConvertEmpty
       }
       jobs={jobs}
       onCancel={(id) => void cancel(id)}

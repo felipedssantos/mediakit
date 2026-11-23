@@ -1,6 +1,7 @@
+import { Inbox } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { ptBR } from "../i18n/pt-BR";
+import { useT } from "../hooks/useLocale";
 
 interface JobQueueListProps<J extends { id: string }> {
   jobs: J[];
@@ -15,22 +16,30 @@ export function JobQueueList<J extends { id: string }>({
   emptyDetail,
   renderItem,
 }: JobQueueListProps<J>) {
+  const t = useT();
   if (jobs.length === 0) {
     return (
       <div
-        className={`flex flex-col items-start justify-center border border-dashed border-steel-dim px-4 py-8 ${
+        className={`flex flex-col items-center justify-center p-6 text-center ${
           fill ? "h-full min-h-0 flex-1" : ""
         }`}
       >
-        <span className="stamp text-paint-faint">{ptBR.common.emptyQueue}</span>
-        <p className="mt-2 text-sm leading-6 text-paint-dim">{emptyDetail}</p>
+        <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-line bg-elevated text-ink-3">
+          <Inbox size={20} />
+        </span>
+        <p className="mt-3 text-sm font-semibold text-ink">
+          {t.common.emptyQueue}
+        </p>
+        <p className="mt-1 max-w-xs text-xs leading-5 text-ink-2">
+          {emptyDetail}
+        </p>
       </div>
     );
   }
 
   return (
     <div
-      className={`border-t border-rule ${fill ? "min-h-0 flex-1 overflow-y-auto" : ""}`}
+      className={`flex flex-col gap-2.5 p-3 ${fill ? "min-h-0 flex-1 overflow-y-auto" : ""}`}
     >
       {jobs
         .map((job, index) => ({ job, line: index + 1 }))

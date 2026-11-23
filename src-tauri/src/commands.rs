@@ -6,11 +6,12 @@ use crate::error::{AppError, AppResult};
 use crate::manager::JobManager;
 use crate::presets::default_output_path;
 use crate::probe as media_probe;
+use crate::sidecar::{self, SidecarConfig, SidecarStatusReport};
 use crate::types::{
     AddJobRequest, AddYoutubeDownloadRequest, EncodeOptions, HwCapabilities, Job, MediaInfo,
     YoutubeDownloadJob, YoutubeDownloadOptions, YoutubeVideo,
 };
-use crate::worker::ffmpeg::detect_nvenc;
+use crate::worker::ffmpeg::detect_hw_capabilities;
 use crate::youtube::probe as youtube_probe;
 use crate::youtube::YoutubeManager;
 
@@ -87,9 +88,7 @@ pub async fn get_max_concurrency(manager: State<'_, Arc<JobManager>>) -> AppResu
 
 #[tauri::command]
 pub async fn detect_hw(app: AppHandle) -> AppResult<HwCapabilities> {
-    Ok(HwCapabilities {
-        nvenc: detect_nvenc(&app).await.unwrap_or(false),
-    })
+    Ok(detect_hw_capabilities(&app).await)
 }
 
 #[tauri::command]
@@ -160,4 +159,27 @@ pub async fn default_download_dir(app: AppHandle) -> AppResult<String> {
         .video_dir()
         .map(|path| path.to_string_lossy().into_owned())
         .map_err(|e| AppError::message(format!("Pasta de vídeos não encontrada: {e}")))
+}
+
+#[tauri::command]
+pub async fn check_sidecars(app: AppHandle) -> AppResult<SidecarStatusReport> {
+    Ok(sidecar::check_sidecars(&app).await)
+}
+
+#[tauri::command]
+pub async fn repair_sidecars(
+    app: AppHandle,
+    targets: Option<Vec<String>>,
+) -> AppResult<SidecarStatusReport> {
+    sidecar::repair_sidecars(&app, targets).await
+}
+
+#[tauri::command]
+pub async fn get_sidecar_config(app: AppHandle) -> AppResult<SidecarConfig> {
+    Ok(sidecar::load_sidecar_config(&app))
+}
+
+#[tauri::command]
+pub async fn set_sidecar_config(app: AppHandle, config: SidecarConfig) -> AppResult<SidecarConfig> {
+    sidecar::save_sidecar_config(&app, config)
 }

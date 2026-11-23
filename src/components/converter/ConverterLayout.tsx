@@ -1,18 +1,20 @@
-import type { ReactNode } from "react";
-import { PlayCircle } from "lucide-react";
+import { Loader2, Play } from "lucide-react";
+import { useEffect, useRef, type ReactNode } from "react";
 
-import { ptBR } from "../../i18n/pt-BR";
+import { useT } from "../../hooks/useLocale";
+import { animatePageEnter } from "../../lib/motion";
 import type { Job } from "../../types/job";
-import { BoardHeader } from "../BoardHeader";
-import { BoardWait } from "../BoardWait";
+import { ErrorBanner } from "../ErrorBanner";
 import { FieldHint } from "../FieldHint";
 import { JobQueue } from "../JobQueue";
+import { QueueSidebar } from "../QueueSidebar";
+import { StepProgressBar } from "../StepProgressBar";
 
 interface ConverterLayoutProps {
   title: string;
   detail: string;
   error: string | null;
-  onBack: () => void;
+  onBack?: () => void;
   dropSection: ReactNode;
   presetSection: ReactNode;
   settingsSection: ReactNode;
@@ -20,6 +22,7 @@ interface ConverterLayoutProps {
   canStart: boolean;
   startLabel: string;
   startHint: string;
+  summary?: string | null;
   onStart: () => void;
   queueTitle: string;
   queueEmpty: string;
@@ -32,7 +35,6 @@ export function ConverterLayout({
   title,
   detail,
   error,
-  onBack,
   dropSection,
   presetSection,
   settingsSection,
@@ -40,6 +42,7 @@ export function ConverterLayout({
   canStart,
   startLabel,
   startHint,
+  summary,
   onStart,
   queueTitle,
   queueEmpty,
@@ -47,61 +50,85 @@ export function ConverterLayout({
   onCancel,
   onRetry,
 }: ConverterLayoutProps) {
+  const t = useT();
+  const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    return animatePageEnter(mainRef.current);
+  }, []);
+
   return (
-    <main className="board-shutter flex h-full min-h-0 flex-col bg-void text-paint">
-      <BoardHeader title={title} detail={detail} onBack={onBack} />
+    <main
+      ref={mainRef}
+      className="bg-studio-canvas flex h-full min-h-0 flex-col text-ink"
+    >
+      <header className="shrink-0 border-b border-line bg-surface px-6 py-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-ink">
+              {title}
+            </h1>
+            <p className="mt-0.5 text-sm text-ink-2">{detail}</p>
+          </div>
 
-      {error && (
-        <p className="shrink-0 border-b border-rule bg-flap px-4 py-2 text-sm text-fault">
-          <span className="stamp mr-2 text-fault">
-            {ptBR.common.errorStamp}
-          </span>
-          {error}
-        </p>
-      )}
+          <StepProgressBar
+            ariaLabel={t.converter.stepsAriaLabel}
+            steps={[
+              t.converter.stepFiles,
+              t.converter.stepGoal,
+              t.converter.stepStart,
+            ]}
+            firstStepDone={canStart}
+          />
+        </div>
+      </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(300px,34%)]">
+      <ErrorBanner message={error} />
+
+      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(310px,36%)]">
         <div className="flex min-h-0 flex-col">
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-            <div className="flex flex-col gap-5">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            <div className="mx-auto flex max-w-4xl flex-col gap-6">
               {dropSection}
               {presetSection}
               {settingsSection}
             </div>
           </div>
-          <div className="shrink-0 border-t border-rule bg-void px-4 py-3">
-            <button
-              type="button"
-              disabled={busy || !canStart}
-              onClick={onStart}
-              className="stamp ink flex w-full items-center justify-center gap-2 border border-lamp bg-lamp px-3.5 py-2.5 text-void hover:bg-void hover:text-lamp disabled:cursor-not-allowed disabled:border-steel-dim disabled:bg-transparent disabled:text-paint-faint"
-            >
-              {busy ? (
-                <BoardWait compact label={ptBR.common.queuing} />
-              ) : (
-                <PlayCircle size={14} />
+
+          <div className="shrink-0 border-t border-line bg-surface px-6 py-3.5">
+            <div className="mx-auto flex max-w-4xl flex-col gap-1.5">
+              {summary && canStart && (
+                <p className="mono-num text-xs font-medium text-ink-2">
+                  {summary}
+                </p>
               )}
-              {startLabel}
-            </button>
-            {!canStart && <FieldHint>{startHint}</FieldHint>}
+              <button
+                type="button"
+                disabled={busy || !canStart}
+                onClick={onStart}
+                className="ui-btn flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-accent-ink shadow-sm hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-elevated disabled:text-ink-3 disabled:shadow-none"
+              >
+                {busy ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Play size={16} fill="currentColor" />
+                )}
+                <span>{startLabel}</span>
+              </button>
+              {!canStart && <FieldHint>{startHint}</FieldHint>}
+            </div>
           </div>
         </div>
 
-        <aside className="flex min-h-0 flex-col border-t border-rule lg:border-l lg:border-t-0">
-          <div className="steel flex shrink-0 items-center justify-between gap-2 px-3 py-2">
-            <h2 className="stamp text-paint">{queueTitle}</h2>
-            <span className="cell text-xs text-paint-dim">
-              {String(jobs.length).padStart(2, "0")}
-            </span>
-          </div>
+        <QueueSidebar title={queueTitle} count={jobs.length}>
           <JobQueue
             fill
             jobs={jobs}
             onCancel={onCancel}
             onRetry={onRetry}
-            emptyDetail={queueEmpty}
+            emptyDetail={queueEmpty || t.common.emptyQueue}
           />
-        </aside>
+        </QueueSidebar>
       </div>
     </main>
   );

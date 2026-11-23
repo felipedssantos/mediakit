@@ -64,8 +64,29 @@ export interface ProgressPayload {
   speed: string | null;
 }
 
+export type GpuVendor = "nvidia" | "amd" | "intel" | "apple" | "vaapi";
+
+export function gpuVendorName(gpu: GpuVendor | null | undefined): string {
+  switch (gpu) {
+    case "nvidia":
+      return "NVIDIA";
+    case "amd":
+      return "AMD";
+    case "intel":
+      return "Intel";
+    case "apple":
+      return "Apple";
+    case "vaapi":
+      return "VAAPI";
+    default:
+      return "GPU";
+  }
+}
+
 export interface HwCapabilities {
   nvenc: boolean;
+  gpu: GpuVendor | null;
+  available_gpus: GpuVendor[];
 }
 
 export interface PendingFile {

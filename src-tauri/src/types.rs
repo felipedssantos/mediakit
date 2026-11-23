@@ -78,9 +78,21 @@ pub struct ProgressPayload {
     pub speed: Option<String>,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum GpuVendor {
+    Nvidia,
+    Amd,
+    Intel,
+    Apple,
+    Vaapi,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HwCapabilities {
     pub nvenc: bool,
+    pub gpu: Option<GpuVendor>,
+    pub available_gpus: Vec<GpuVendor>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

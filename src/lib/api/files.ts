@@ -36,6 +36,17 @@ export async function pickOutputDirectory(): Promise<string | null> {
   return selected;
 }
 
+/** Opens a file picker dialog filtered to Windows executables (.exe). */
+export async function pickExecutableFile(): Promise<string | null> {
+  const selected = await open({
+    directory: false,
+    multiple: false,
+    filters: [{ name: "Executável", extensions: ["exe"] }],
+  });
+  if (!selected || Array.isArray(selected)) return null;
+  return selected;
+}
+
 /** Reveals a file or its parent directory in Windows Explorer. */
 export async function revealPath(path: string): Promise<void> {
   const target = path.trim();

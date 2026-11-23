@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { ptBR } from "../i18n/pt-BR";
+import { getT } from "./useLocale";
 import { pickOutputDirectory } from "../lib/api/files";
 import { defaultDownloadDir, probeYoutube } from "../lib/api/youtube";
 import { parseYoutubeUrls } from "../lib/youtube";
 import type { YoutubeDownloadOptions, YoutubeVideo } from "../types/youtube";
 import { formatErrorMessage } from "./createJobQueueStore";
+import { useAppSettings } from "./useAppSettings";
 import { useYoutubeJobs } from "./useYoutubeJobs";
 
 type PendingStatus = "idle" | "probing" | "ready" | "error";
@@ -19,18 +20,25 @@ export interface PendingYoutube {
 
 export function useYoutubeForm() {
   const enqueueMany = useYoutubeJobs((state) => state.enqueueMany);
+  const appSettings = useAppSettings.getState();
 
   const [urlText, setUrlText] = useState("");
   const [pending, setPending] = useState<PendingYoutube[]>([]);
   const [probing, setProbing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [outputDir, setOutputDir] = useState<string>("");
-  const [mode, setMode] = useState<"video" | "audio">("video");
+  const [outputDir, setOutputDir] = useState<string>(
+    appSettings.youtubeOutputDir ?? "",
+  );
+  const [mode, setMode] = useState<"video" | "audio">(appSettings.youtubeMode);
   const [quality, setQuality] =
-    useState<YoutubeDownloadOptions["quality"]>("best");
+    useState<YoutubeDownloadOptions["quality"]>(appSettings.youtubeQuality);
   const [audioFormat, setAudioFormat] =
-    useState<YoutubeDownloadOptions["audio_format"]>("m4a");
+    useState<YoutubeDownloadOptions["audio_format"]>(
+      appSettings.youtubeAudioFormat,
+    );
+
+  const probedUrlsRef = useRef<Set<string>>(new Set());
 
   const readyItems = useMemo(
     () => pending.filter((item) => item.status === "ready" && item.video),
@@ -39,12 +47,14 @@ export function useYoutubeForm() {
   const urlCount = parseYoutubeUrls(urlText).length;
 
   useEffect(() => {
+    if (appSettings.youtubeOutputDir) return;
     void defaultDownloadDir()
       .then(setOutputDir)
       .catch(() => setOutputDir(""));
-  }, []);
+  }, [appSettings.youtubeOutputDir]);
 
   function removePending(url: string) {
+    probedUrlsRef.current.delete(url);
     setPending((items) => items.filter((item) => item.url !== url));
     setUrlText((text) =>
       text
@@ -54,16 +64,25 @@ export function useYoutubeForm() {
     );
   }
 
-  async function handleProbe() {
-    const urls = parseYoutubeUrls(urlText);
-    if (urls.length === 0) {
-      setError(ptBR.youtube.errNoLinks);
-      return;
-    }
+  const probeUrls = useCallback(async (urls: string[], replaceAll: boolean) => {
+    if (urls.length === 0) return;
 
     setProbing(true);
     setError(null);
-    setPending(urls.map((url) => ({ url, status: "probing" as const })));
+
+    if (replaceAll) {
+      probedUrlsRef.current = new Set(urls);
+      setPending(urls.map((url) => ({ url, status: "probing" as const })));
+    } else {
+      urls.forEach((url) => probedUrlsRef.current.add(url));
+      setPending((prev) => {
+        const existing = new Set(prev.map((p) => p.url));
+        const additions = urls
+          .filter((url) => !existing.has(url))
+          .map((url) => ({ url, status: "probing" as const }));
+        return [...prev, ...additions];
+      });
+    }
 
     for (const url of urls) {
       try {
@@ -88,6 +107,26 @@ export function useYoutubeForm() {
     }
 
     setProbing(false);
+  }, []);
+
+  useEffect(() => {
+    const urls = parseYoutubeUrls(urlText);
+    const fresh = urls.filter((url) => !probedUrlsRef.current.has(url));
+    if (fresh.length === 0) return;
+
+    const timer = window.setTimeout(() => {
+      void probeUrls(fresh, false);
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [urlText, probeUrls]);
+
+  async function handleProbe() {
+    const urls = parseYoutubeUrls(urlText);
+    if (urls.length === 0) {
+      setError(getT().youtube.errNoLinks);
+      return;
+    }
+    await probeUrls(urls, true);
   }
 
   async function handlePickFolder() {
@@ -97,11 +136,11 @@ export function useYoutubeForm() {
 
   async function handleDownload() {
     if (readyItems.length === 0) {
-      setError(ptBR.youtube.errProbeFirst);
+      setError(getT().youtube.errProbeFirst);
       return;
     }
     if (!outputDir) {
-      setError(ptBR.youtube.errNoDir);
+      setError(getT().youtube.errNoDir);
       return;
     }
 
@@ -122,6 +161,7 @@ export function useYoutubeForm() {
           options,
         })),
       );
+      probedUrlsRef.current.clear();
       setPending([]);
       setUrlText("");
     } catch (err) {

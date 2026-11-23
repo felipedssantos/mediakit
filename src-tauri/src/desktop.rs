@@ -42,7 +42,7 @@ pub fn quit(app: &AppHandle) {
 }
 
 pub fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
-    let open = MenuItem::with_id(app, "open", "Abrir Conversor", true, None::<&str>)?;
+    let open = MenuItem::with_id(app, "open", "Abrir MediaKit", true, None::<&str>)?;
     let quit_item = MenuItem::with_id(app, "quit", "Sair", true, None::<&str>)?;
     let sep = PredefinedMenuItem::separator(app)?;
 
@@ -56,7 +56,7 @@ pub fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
     let mut tray = TrayIconBuilder::new()
         .menu(&menu)
         .show_menu_on_left_click(false)
-        .tooltip("Conversor")
+        .tooltip("MediaKit")
         .on_menu_event(|app, event| match event.id.as_ref() {
             "open" => show_main(app),
             "print" if features::SCREENSHOT_ENABLED => {

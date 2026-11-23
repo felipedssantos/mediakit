@@ -1,6 +1,6 @@
 import { FolderOpen } from "lucide-react";
 
-import { ptBR } from "../../i18n/pt-BR";
+import { useT } from "../../hooks/useLocale";
 
 interface OutputDirFieldProps {
   label?: string;
@@ -11,26 +11,31 @@ interface OutputDirFieldProps {
 }
 
 export function OutputDirField({
-  label = ptBR.common.outputDirLabel,
+  label,
   value,
-  placeholder = ptBR.common.sameAsInputDir,
+  placeholder,
   onPick,
   className,
 }: OutputDirFieldProps) {
+  const t = useT();
+  const resolvedLabel = label ?? t.common.outputDirLabel;
+  const resolvedPlaceholder = placeholder ?? t.common.sameAsInputDir;
   return (
     <div className={className}>
-      <label className="stamp block text-paint-dim">{label}</label>
-      <div className="mt-1 flex gap-2">
-        <p className="cell min-w-0 flex-1 truncate border border-steel-dim bg-flap px-2.5 py-1.5 text-xs text-paint-dim">
-          {value || placeholder}
+      <label className="block text-xs font-medium text-ink-2">
+        {resolvedLabel}
+      </label>
+      <div className="mt-1.5 flex gap-2">
+        <p className="mono-num min-w-0 flex-1 truncate rounded-lg border border-line bg-inset px-3 py-2 text-xs text-ink-2">
+          {value || resolvedPlaceholder}
         </p>
         <button
           type="button"
           onClick={onPick}
-          className="stamp ink inline-flex shrink-0 items-center gap-1.5 border border-steel-dim px-2.5 py-1.5 text-paint-dim hover:border-lamp hover:text-lamp"
+          className="ui-btn inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-line-strong bg-elevated px-3 py-2 text-xs font-medium text-ink hover:border-accent hover:text-accent"
         >
-          <FolderOpen size={13} />
-          {ptBR.common.choose}
+          <FolderOpen size={14} />
+          {t.common.choose}
         </button>
       </div>
     </div>

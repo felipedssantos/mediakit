@@ -1,7 +1,10 @@
-import { ptBR } from "../../i18n/pt-BR";
+import { Film, Music } from "lucide-react";
+
+import { useT } from "../../hooks/useLocale";
 import type { YoutubeDownloadOptions } from "../../types/youtube";
 import { FieldHint } from "../FieldHint";
-import { SectionRule } from "../SectionRule";
+import { SelectField } from "../SelectField";
+import { StepHeader } from "../StepHeader";
 import { OutputDirField } from "../settings/OutputDirField";
 
 interface YoutubeDownloadOptionsPanelProps {
@@ -15,9 +18,6 @@ interface YoutubeDownloadOptionsPanelProps {
   onPickFolder: () => void;
 }
 
-const selectClass =
-  "ink mt-1.5 w-full border border-steel-dim bg-flap px-2.5 py-1.5 text-sm text-paint outline-none focus:border-lamp";
-
 export function YoutubeDownloadOptionsPanel({
   mode,
   quality,
@@ -28,102 +28,99 @@ export function YoutubeDownloadOptionsPanel({
   onAudioFormatChange,
   onPickFolder,
 }: YoutubeDownloadOptionsPanelProps) {
+  const t = useT();
+  const modeOptions = [
+    {
+      id: "video" as const,
+      icon: Film,
+      label: t.youtube.modeVideo,
+      detail: t.youtube.modeVideoDetail,
+    },
+    {
+      id: "audio" as const,
+      icon: Music,
+      label: t.youtube.modeAudio,
+      detail: t.youtube.modeAudioDetail,
+    },
+  ];
+
   return (
     <div>
-      <SectionRule step="02" title={ptBR.youtube.stepMode} />
-      <div className="flex flex-col border border-rule">
-        <div className="grid grid-cols-2">
-          <button
-            type="button"
-            aria-pressed={mode === "video"}
-            onClick={() => onModeChange("video")}
-            className={`ink border-r border-rule px-3 py-2.5 text-left ${
-              mode === "video" ? "bg-flap" : "hover:bg-flap"
-            }`}
-          >
-            <span
-              className={`block text-sm font-semibold ${
-                mode === "video" ? "text-lamp" : "text-paint-dim"
-              }`}
-            >
-              {ptBR.youtube.modeVideo}
-            </span>
-            <span className="mt-0.5 block text-xs leading-5 text-paint-faint">
-              {ptBR.youtube.modeVideoDetail}
-            </span>
-          </button>
-          <button
-            type="button"
-            aria-pressed={mode === "audio"}
-            onClick={() => onModeChange("audio")}
-            className={`ink px-3 py-2.5 text-left ${
-              mode === "audio" ? "bg-flap" : "hover:bg-flap"
-            }`}
-          >
-            <span
-              className={`block text-sm font-semibold ${
-                mode === "audio" ? "text-lamp" : "text-paint-dim"
-              }`}
-            >
-              {ptBR.youtube.modeAudio}
-            </span>
-            <span className="mt-0.5 block text-xs leading-5 text-paint-faint">
-              {ptBR.youtube.modeAudioDetail}
-            </span>
-          </button>
+      <StepHeader step="2" title={t.youtube.stepMode} />
+      <div className="surface-card flex flex-col overflow-hidden rounded-2xl">
+        <div className="grid grid-cols-1 divide-y divide-line sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+          {modeOptions.map(({ id, icon: Icon, label, detail }) => {
+            const active = mode === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => onModeChange(id)}
+                className={`ui-control flex items-start gap-3 p-4 text-left ${
+                  active ? "bg-accent-soft" : "hover:bg-elevated"
+                }`}
+              >
+                <span
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                    active
+                      ? "bg-accent text-accent-ink"
+                      : "bg-elevated text-ink-2"
+                  }`}
+                >
+                  <Icon size={17} />
+                </span>
+                <div>
+                  <span
+                    className={`block text-sm font-semibold ${
+                      active ? "text-accent" : "text-ink"
+                    }`}
+                  >
+                    {label}
+                  </span>
+                  <span className="mt-0.5 block text-xs leading-5 text-ink-2">
+                    {detail}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
-        <div className="grid gap-4 border-t border-rule px-3 py-3 sm:grid-cols-2">
+        <div className="grid gap-4 border-t border-line p-4 sm:grid-cols-2">
           {mode === "video" ? (
-            <div>
-              <label className="stamp block text-paint-dim">
-                {ptBR.youtube.videoQualityLabel}
-              </label>
-              <select
-                value={quality}
-                onChange={(event) =>
-                  onQualityChange(
-                    event.target.value as YoutubeDownloadOptions["quality"],
-                  )
-                }
-                className={selectClass}
-              >
-                <option value="best">{ptBR.youtube.qualityBest}</option>
-                <option value="1080p">{ptBR.youtube.quality1080}</option>
-                <option value="720p">{ptBR.youtube.quality720}</option>
-                <option value="480p">{ptBR.youtube.quality480}</option>
-              </select>
-              <FieldHint>{ptBR.youtube.videoQualityHint}</FieldHint>
-            </div>
+            <SelectField<YoutubeDownloadOptions["quality"]>
+              label={t.youtube.videoQualityLabel}
+              value={quality}
+              onChange={onQualityChange}
+              hint={t.youtube.videoQualityHint}
+              options={[
+                { value: "best", label: t.youtube.qualityBest },
+                { value: "1080p", label: t.youtube.quality1080 },
+                { value: "720p", label: t.youtube.quality720 },
+                { value: "480p", label: t.youtube.quality480 },
+              ]}
+            />
           ) : (
-            <div>
-              <label className="stamp block text-paint-dim">
-                {ptBR.youtube.audioFormatLabel}
-              </label>
-              <select
-                value={audioFormat}
-                onChange={(event) =>
-                  onAudioFormatChange(
-                    event.target
-                      .value as YoutubeDownloadOptions["audio_format"],
-                  )
-                }
-                className={selectClass}
-              >
-                <option value="m4a">{ptBR.youtube.audioM4a}</option>
-                <option value="mp3">{ptBR.youtube.audioMp3}</option>
-              </select>
-              <FieldHint>{ptBR.youtube.audioFormatHint}</FieldHint>
-            </div>
+            <SelectField<YoutubeDownloadOptions["audio_format"]>
+              label={t.youtube.audioFormatLabel}
+              value={audioFormat}
+              onChange={onAudioFormatChange}
+              hint={t.youtube.audioFormatHint}
+              options={[
+                { value: "m4a", label: t.youtube.audioM4a },
+                { value: "mp3", label: t.youtube.audioMp3 },
+              ]}
+            />
           )}
 
           <div>
             <OutputDirField
               value={outputDir}
-              placeholder={ptBR.youtube.windowsVideosDir}
+              placeholder={t.youtube.windowsVideosDir}
               onPick={onPickFolder}
             />
-            <FieldHint>{ptBR.youtube.batchDirHint}</FieldHint>
+            <FieldHint>{t.youtube.batchDirHint}</FieldHint>
           </div>
         </div>
       </div>

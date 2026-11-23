@@ -8,7 +8,7 @@ use crate::progress::{
     parse_ytdlp_progress, parse_ytdlp_speed,
 };
 use crate::queue::JobQueue;
-use crate::sidecar::{bundled_sidecar_path, spawn_sidecar, stream_lines};
+use crate::sidecar::{resolve_sidecar_path, spawn_sidecar, stream_lines};
 use crate::types::{JobStatus, YoutubeDownloadJob};
 use crate::youtube::cookies::CookieCache;
 use crate::youtube::probe::humanize_ytdlp_error;
@@ -24,7 +24,7 @@ pub async fn run_download(
         return;
     }
 
-    let ffmpeg = bundled_sidecar_path("ffmpeg");
+    let ffmpeg = resolve_sidecar_path(&app, "ffmpeg");
     let stem = sanitize_filename(&job.title);
     let ext = if job.options.mode == "audio" {
         job.options.audio_format.as_str()
@@ -81,7 +81,8 @@ pub async fn run_download(
         args.push(browser);
     }
 
-    args.push(job.url.clone());
+    args.push("--".into());
+    args.push(job.url.trim().to_string());
 
     let (mut rx, child) = match spawn_sidecar(&app, "yt-dlp", args) {
         Ok(pair) => pair,

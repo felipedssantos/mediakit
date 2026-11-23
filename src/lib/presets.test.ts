@@ -48,6 +48,11 @@ describe("presets", () => {
     expect(formatBytes(1536 * 1024)).toBe("1.5 MB");
   });
 
+  it("marks a recommended preset for both compress and convert flows", () => {
+    expect(VIDEO_COMPRESS_PRESETS.some((p) => p.recommended)).toBe(true);
+    expect(VIDEO_CONVERT_PRESETS.some((p) => p.recommended)).toBe(true);
+  });
+
   it("formats durations in mm:ss and h:mm:ss", () => {
     expect(formatDuration(0)).toBe("—");
     expect(formatDuration(Number.NaN)).toBe("—");

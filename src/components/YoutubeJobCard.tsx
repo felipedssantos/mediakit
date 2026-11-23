@@ -1,5 +1,5 @@
-import { ptBR } from "../i18n/pt-BR";
-import { BOARD_STATUS } from "../lib/boardStatus";
+import { useT } from "../hooks/useLocale";
+import { getBoardStatus } from "../lib/boardStatus";
 import type { YoutubeDownloadJob } from "../types/youtube";
 import { JobCardBase } from "./JobCardBase";
 
@@ -16,19 +16,20 @@ export function YoutubeJobCard({
   onCancel,
   onRetry,
 }: YoutubeJobCardProps) {
+  const t = useT();
   const statusLabel =
     job.status === "running"
-      ? ptBR.youtube.cardDownloading
-      : BOARD_STATUS[job.status].label;
+      ? t.youtube.cardDownloading
+      : getBoardStatus(job.status, t).label;
 
   const detail =
     job.options.mode === "audio"
-      ? ptBR.youtube.cardAudioDetail(job.options.audio_format.toUpperCase())
-      : ptBR.youtube.cardVideoDetail(job.options.quality);
+      ? t.youtube.cardAudioDetail(job.options.audio_format.toUpperCase())
+      : t.youtube.cardVideoDetail(job.options.quality);
 
   const speed =
     job.status === "finalizing"
-      ? ptBR.youtube.cardFinalizingSpeed
+      ? t.youtube.cardFinalizingSpeed
       : job.status === "running"
         ? job.speed
         : null;

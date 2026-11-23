@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest an improvement or new capability for Conversor
+description: Suggest an improvement or new capability for MediaKit
 title: "[Feat]: "
 labels: ["enhancement"]
 body:
@@ -14,7 +14,7 @@ body:
     id: proposal
     attributes:
       label: Proposed solution
-      description: Describe how you envision this working in Conversor.
+      description: Describe how you envision this working in MediaKit.
     validations:
       required: true
   - type: textarea

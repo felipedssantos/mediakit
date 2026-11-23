@@ -3,7 +3,7 @@ use std::path::Path;
 use crate::error::{AppError, AppResult};
 use crate::presets::image::{append_image, image_format_from, is_image_preset};
 use crate::presets::video::{append_compress, append_convert_video, append_extract_audio};
-use crate::types::{EncodeOptions, MediaInfo};
+use crate::types::{EncodeOptions, GpuVendor, MediaInfo};
 
 /// Resolves the output file extension for a given preset and optional container/format override.
 pub fn output_extension(preset_id: &str, format: Option<&str>) -> &'static str {
@@ -42,20 +42,21 @@ pub fn build_args(
     output: &str,
     options: &EncodeOptions,
     media: Option<&MediaInfo>,
+    gpu_vendor: Option<GpuVendor>,
 ) -> AppResult<Vec<String>> {
-    let mut args = vec![
-        "-hide_banner".into(),
-        "-y".into(),
-        "-i".into(),
-        input.into(),
-    ];
+    let mut args = vec!["-hide_banner".into(), "-y".into()];
+    let wants_gpu = options.use_gpu.unwrap_or(options.preset_id == "gpu_nvenc");
+    if wants_gpu && gpu_vendor == Some(GpuVendor::Vaapi) && !is_image_preset(&options.preset_id) {
+        args.extend(["-vaapi_device".into(), "/dev/dri/renderD128".into()]);
+    }
+    args.extend(["-i".into(), input.into()]);
 
     match options.preset_id.as_str() {
-        "convert_mp4" => append_convert_video(&mut args, options, media),
+        "convert_mp4" => append_convert_video(&mut args, options, media, gpu_vendor),
         "extract_audio" => append_extract_audio(&mut args, options),
-        "compress_quality" => append_compress(&mut args, options, "hevc", 23),
-        "gpu_nvenc" => append_compress(&mut args, options, "h264", 28),
-        "compress_web" => append_compress(&mut args, options, "h264", 28),
+        "compress_quality" => append_compress(&mut args, options, "hevc", 23, gpu_vendor),
+        "gpu_nvenc" => append_compress(&mut args, options, "h264", 28, gpu_vendor),
+        "compress_web" => append_compress(&mut args, options, "h264", 28, gpu_vendor),
         id if is_image_preset(id) => append_image(&mut args, options),
         other => {
             return Err(AppError::validation(format!(
@@ -101,7 +102,7 @@ pub fn default_output_path(
 mod tests {
     use super::{build_args, output_extension};
     use crate::presets::image::jpeg_q;
-    use crate::types::EncodeOptions;
+    use crate::types::{EncodeOptions, GpuVendor};
 
     fn options(preset_id: &str, quality: Option<u32>, format: Option<&str>) -> EncodeOptions {
         EncodeOptions {
@@ -125,6 +126,7 @@ mod tests {
             "out.jpg",
             &options("img_convert_jpeg", Some(85), None),
             None,
+            None,
         )
         .unwrap();
         assert!(args.contains(&"-frames:v".into()));
@@ -139,6 +141,7 @@ mod tests {
             "in.jpg",
             "out.webp",
             &options("img_compress_web", Some(75), None),
+            None,
             None,
         )
         .unwrap();
@@ -165,8 +168,38 @@ mod tests {
     fn convert_webm_uses_vp9() {
         let mut opts = options("convert_mp4", None, None);
         opts.container = Some("webm".into());
-        let args = build_args("in.mkv", "out.webm", &opts, None).unwrap();
+        let args = build_args("in.mkv", "out.webm", &opts, None, None).unwrap();
         assert!(args.contains(&"libvpx-vp9".into()));
         assert!(args.contains(&"libopus".into()));
+    }
+
+    #[test]
+    fn gpu_encoders_map_per_vendor() {
+        let mut opts = options("compress_web", None, None);
+        opts.use_gpu = Some(true);
+
+        let nv = build_args("in.mp4", "out.mp4", &opts, None, Some(GpuVendor::Nvidia)).unwrap();
+        assert!(nv.contains(&"h264_nvenc".into()));
+
+        let amd = build_args("in.mp4", "out.mp4", &opts, None, Some(GpuVendor::Amd)).unwrap();
+        assert!(amd.contains(&"h264_amf".into()));
+
+        let intel = build_args("in.mp4", "out.mp4", &opts, None, Some(GpuVendor::Intel)).unwrap();
+        assert!(intel.contains(&"h264_qsv".into()));
+
+        let apple = build_args("in.mp4", "out.mp4", &opts, None, Some(GpuVendor::Apple)).unwrap();
+        assert!(apple.contains(&"h264_videotoolbox".into()));
+
+        let vaapi = build_args("in.mp4", "out.mp4", &opts, None, Some(GpuVendor::Vaapi)).unwrap();
+        assert!(vaapi.contains(&"h264_vaapi".into()));
+        assert!(vaapi.contains(&"-vaapi_device".into()));
+
+        opts.video_codec = Some("hevc".into());
+        let amd_hevc = build_args("in.mp4", "out.mp4", &opts, None, Some(GpuVendor::Amd)).unwrap();
+        assert!(amd_hevc.contains(&"hevc_amf".into()));
+
+        opts.use_gpu = Some(false);
+        let cpu = build_args("in.mp4", "out.mp4", &opts, None, Some(GpuVendor::Amd)).unwrap();
+        assert!(cpu.contains(&"libx265".into()));
     }
 }

@@ -1,11 +1,10 @@
+import { CheckCircle2, Download, Loader2, X } from "lucide-react";
 import type { CSSProperties } from "react";
-import { Download, X } from "lucide-react";
 
 import type { PendingYoutube } from "../../hooks/useYoutubeForm";
-import { ptBR } from "../../i18n/pt-BR";
+import { useT } from "../../hooks/useLocale";
 import { formatDuration } from "../../lib/presets";
-import { BoardWait } from "../BoardWait";
-import { SectionRule } from "../SectionRule";
+import { StepHeader } from "../StepHeader";
 
 interface PendingLinksListProps {
   items: PendingYoutube[];
@@ -18,28 +17,27 @@ export function PendingLinksList({
   readyCount,
   onRemove,
 }: PendingLinksListProps) {
+  const t = useT();
   if (items.length === 0) return null;
 
   return (
     <div>
-      <SectionRule
-        step={String(readyCount).padStart(2, "0")}
+      <StepHeader
+        step={String(readyCount)}
         title={
           items.length > 1
-            ? ptBR.youtube.readyListTitle
-            : ptBR.youtube.probeStatusTitle
+            ? t.youtube.readyListTitle
+            : t.youtube.probeStatusTitle
         }
       />
-      <ul className="border border-rule">
+      <ul className="surface-card divide-y divide-line overflow-hidden rounded-2xl">
         {items.map((item, index) => (
           <li
             key={item.url}
-            className={`board-row-in flex items-start gap-2.5 px-2.5 py-2 ${
-              index > 0 ? "border-t border-rule" : ""
-            }`}
+            className="ui-enter flex items-start gap-3 p-3.5"
             style={
               {
-                "--stagger": `${Math.min(index, 5) * 28}ms`,
+                "--stagger": `${Math.min(index, 5) * 24}ms`,
               } as CSSProperties
             }
           >
@@ -47,48 +45,46 @@ export function PendingLinksList({
               <img
                 src={item.video.thumbnail}
                 alt=""
-                className="h-9 w-16 shrink-0 bg-void object-cover"
+                className="h-12 w-20 shrink-0 rounded-lg bg-inset object-cover ring-1 ring-line"
               />
             ) : (
               <div
-                className="flex h-9 w-16 shrink-0 items-center justify-center border border-steel-dim bg-flap text-paint-faint"
+                className="flex h-12 w-20 shrink-0 items-center justify-center rounded-lg border border-line bg-inset text-ink-3"
                 aria-hidden
               >
                 {item.status === "probing" ? (
-                  <BoardWait compact label={ptBR.youtube.searching} />
+                  <Loader2 size={16} className="animate-spin text-accent" />
                 ) : (
-                  <Download size={14} />
+                  <Download size={16} />
                 )}
               </div>
             )}
 
             <div className="min-w-0 flex-1">
-              <div className="flex items-baseline gap-2">
-                <span className="cell shrink-0 text-[11px] text-paint-faint">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
+              <div className="flex items-center gap-2">
                 {item.status === "probing" && (
-                  <span className="stamp lamp-pulse text-lamp">
-                    {ptBR.youtube.searchingButton}
+                  <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
+                    {t.youtube.searchingButton}
                   </span>
                 )}
                 {item.status === "error" && (
-                  <span className="stamp text-fault">
-                    {ptBR.common.errorStamp}
+                  <span className="inline-flex items-center gap-1 rounded-full bg-danger-soft px-2 py-0.5 text-[11px] font-medium text-danger">
+                    {t.common.errorStamp}
                   </span>
                 )}
                 {item.status === "ready" && item.video && (
-                  <span className="stamp text-cleared">
-                    {ptBR.youtube.readyBadge}
+                  <span className="inline-flex items-center gap-1 rounded-full bg-ok-soft px-2 py-0.5 text-[11px] font-semibold text-ok">
+                    <CheckCircle2 size={11} />
+                    {t.youtube.readyBadge}
                   </span>
                 )}
               </div>
               {item.video ? (
                 <>
-                  <p className="mt-0.5 truncate text-sm text-paint">
+                  <p className="mt-1 truncate text-sm font-semibold text-ink">
                     {item.video.title}
                   </p>
-                  <p className="cell mt-0.5 truncate text-[11px] text-paint-faint">
+                  <p className="mono-num mt-0.5 truncate text-[11px] text-ink-2">
                     {[
                       item.video.source,
                       item.video.channel,
@@ -99,11 +95,11 @@ export function PendingLinksList({
                   </p>
                 </>
               ) : item.error ? (
-                <p className="mt-0.5 text-xs leading-5 text-fault">
+                <p className="mt-1 text-xs leading-5 text-danger">
                   {item.error}
                 </p>
               ) : (
-                <p className="cell mt-0.5 truncate text-[11px] text-paint-faint">
+                <p className="mono-num mt-1 truncate text-xs text-ink-2">
                   {item.url}
                 </p>
               )}
@@ -112,10 +108,10 @@ export function PendingLinksList({
             <button
               type="button"
               onClick={() => onRemove(item.url)}
-              className="ink shrink-0 p-1 text-paint-faint hover:text-fault"
-              aria-label={ptBR.youtube.removeLink}
+              className="ui-control shrink-0 rounded-lg p-1.5 text-ink-3 hover:bg-danger-soft hover:text-danger"
+              aria-label={t.youtube.removeLink}
             >
-              <X size={13} />
+              <X size={14} />
             </button>
           </li>
         ))}

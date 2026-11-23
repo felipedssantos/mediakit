@@ -13,6 +13,7 @@ dist-ssr
 instalador
 .vitest
 *.local
+docs/superpowers/
 
 # Editor directories and files
 .vscode/*

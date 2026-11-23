@@ -1,11 +1,18 @@
 import type { ReactNode } from "react";
 
-import { ptBR } from "../i18n/pt-BR";
+import { useT } from "../hooks/useLocale";
+import type { Translations } from "../i18n";
 import { PRESETS, type PresetId } from "../lib/presets";
 import { FieldHint } from "./FieldHint";
+import { SelectField } from "./SelectField";
+import { AdvancedOptionsDisclosure } from "./settings/AdvancedOptionsDisclosure";
 import { ConcurrencySlider } from "./settings/ConcurrencySlider";
 import { OutputDirField } from "./settings/OutputDirField";
 import { QualitySlider } from "./settings/QualitySlider";
+import {
+  SimpleQualityPicker,
+  type QualityTier,
+} from "./settings/SimpleQualityPicker";
 
 interface OutputSettingsProps {
   presetId: PresetId;
@@ -26,14 +33,40 @@ interface OutputSettingsProps {
   children?: ReactNode;
 }
 
-function qualityLabel(crf: number): string {
-  if (crf <= 21) return ptBR.common.qualityHigh;
-  if (crf <= 28) return ptBR.common.qualityBalanced;
-  return ptBR.common.qualitySmaller;
+function getVideoQualityTiers(t: Translations): QualityTier[] {
+  return [
+    {
+      id: "smaller",
+      label: t.qualitySimple.smaller,
+      hint: t.qualitySimple.smallerHint,
+      value: 31,
+    },
+    {
+      id: "balanced",
+      label: t.qualitySimple.balanced,
+      hint: t.qualitySimple.balancedHint,
+      value: 26,
+    },
+    {
+      id: "high",
+      label: t.qualitySimple.high,
+      hint: t.qualitySimple.highHint,
+      value: 20,
+    },
+  ];
 }
 
-const selectClass =
-  "ink mt-1 w-full border border-steel-dim bg-flap px-2 py-1.5 text-sm text-paint outline-none focus:border-lamp";
+function activeTierForCrf(crf: number): QualityTier["id"] {
+  if (crf <= 22) return "high";
+  if (crf <= 28) return "balanced";
+  return "smaller";
+}
+
+function qualityLabel(crf: number, t: Translations): string {
+  if (crf <= 22) return t.common.qualityHigh;
+  if (crf <= 28) return t.common.qualityBalanced;
+  return t.common.qualitySmaller;
+}
 
 export function OutputSettings({
   presetId,
@@ -53,6 +86,8 @@ export function OutputSettings({
   onPickOutputDir,
   children,
 }: OutputSettingsProps) {
+  const t = useT();
+
   const preset = PRESETS.find((item) => item.id === presetId);
   const audioOnly = presetId === "extract_audio";
   const gpuLocked = Boolean(preset?.usesGpu);
@@ -60,22 +95,26 @@ export function OutputSettings({
   const gpuAllowed = !fixedCodec;
 
   return (
-    <div className="flex flex-col border border-rule">
-      <div className="px-3 py-2.5">
-        <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-          <OutputDirField
-            className="sm:col-span-2"
-            value={outputDir}
-            onPick={onPickOutputDir}
-          />
+    <div className="surface-card flex flex-col rounded-2xl">
+      <div className="flex flex-col gap-4 p-4">
+        <OutputDirField value={outputDir} onPick={onPickOutputDir} />
 
+        {!audioOnly && (
+          <SimpleQualityPicker
+            tiers={getVideoQualityTiers(t)}
+            activeId={activeTierForCrf(crf)}
+            onSelect={onCrfChange}
+          />
+        )}
+
+        <AdvancedOptionsDisclosure>
           {!audioOnly ? (
             <>
               <QualitySlider
                 min={18}
                 max={35}
                 value={crf}
-                label={qualityLabel(crf)}
+                label={qualityLabel(crf, t)}
                 onChange={onCrfChange}
               />
 
@@ -84,65 +123,56 @@ export function OutputSettings({
                 onChange={onConcurrencyChange}
               />
 
-              <div>
-                <label className="stamp block text-paint-dim">
-                  {ptBR.outputSettings.resolutionLabel}
-                </label>
-                <select
-                  value={resolution}
-                  onChange={(event) => onResolutionChange(event.target.value)}
-                  className={selectClass}
-                >
-                  <option value="original">
-                    {ptBR.outputSettings.resOriginal}
-                  </option>
-                  <option value="1080p">{ptBR.outputSettings.res1080p}</option>
-                  <option value="720p">{ptBR.outputSettings.res720p}</option>
-                  <option value="480p">{ptBR.outputSettings.res480p}</option>
-                </select>
-              </div>
+              <SelectField
+                label={t.outputSettings.resolutionLabel}
+                value={resolution}
+                onChange={onResolutionChange}
+                options={[
+                  { value: "original", label: t.outputSettings.resOriginal },
+                  { value: "1080p", label: t.outputSettings.res1080p },
+                  { value: "720p", label: t.outputSettings.res720p },
+                  { value: "480p", label: t.outputSettings.res480p },
+                ]}
+              />
 
               <div>
-                <label className="stamp block text-paint-dim">
-                  {ptBR.outputSettings.codecLabel}
-                </label>
                 {fixedCodec ? (
-                  <p className="mt-1 border border-steel-dim bg-flap px-2 py-1.5 text-sm text-paint-dim">
-                    {container === "webm"
-                      ? ptBR.outputSettings.fixedCodecWebm
-                      : ptBR.outputSettings.fixedCodecAvi}
-                  </p>
+                  <>
+                    <label className="block text-xs font-medium text-ink-2">
+                      {t.outputSettings.codecLabel}
+                    </label>
+                    <p className="mt-1.5 rounded-lg border border-line bg-inset px-3 py-2 text-xs text-ink-2">
+                      {container === "webm"
+                        ? t.outputSettings.fixedCodecWebm
+                        : t.outputSettings.fixedCodecAvi}
+                    </p>
+                  </>
                 ) : (
-                  <select
+                  <SelectField
+                    label={t.outputSettings.codecLabel}
                     value={videoCodec}
-                    onChange={(event) =>
-                      onVideoCodecChange(event.target.value)
-                    }
-                    className={selectClass}
-                  >
-                    <option value="h264">
-                      {ptBR.outputSettings.codecH264}
-                    </option>
-                    <option value="hevc">
-                      {ptBR.outputSettings.codecHevc}
-                    </option>
-                  </select>
+                    onChange={onVideoCodecChange}
+                    options={[
+                      { value: "h264", label: t.outputSettings.codecH264 },
+                      { value: "hevc", label: t.outputSettings.codecHevc },
+                    ]}
+                  />
                 )}
               </div>
 
-              <label className="flex items-center justify-between gap-3 border border-rule bg-flap px-2.5 py-2 sm:col-span-2">
+              <label className="flex items-center justify-between gap-3 rounded-xl border border-line bg-inset px-3 py-2.5 sm:col-span-2">
                 <span className="min-w-0">
-                  <span className="stamp block text-paint-dim">
-                    {ptBR.outputSettings.nvidiaLabel}
+                  <span className="block text-xs font-semibold text-ink">
+                    {t.outputSettings.nvidiaLabel}
                   </span>
-                  <span className="mt-0.5 block text-xs leading-4 text-paint-faint">
+                  <span className="mt-0.5 block text-xs leading-4 text-ink-2">
                     {!gpuAllowed
-                      ? ptBR.outputSettings.nvidiaUnsupportedFormat
+                      ? t.outputSettings.nvidiaUnsupportedFormat
                       : nvencAvailable
                         ? gpuLocked
-                          ? ptBR.outputSettings.nvidiaPresetLocked
-                          : ptBR.outputSettings.nvidiaAvailable
-                        : ptBR.outputSettings.nvidiaUnavailable}
+                          ? t.outputSettings.nvidiaPresetLocked
+                          : t.outputSettings.nvidiaAvailable
+                        : t.outputSettings.nvidiaUnavailable}
                   </span>
                 </span>
                 <input
@@ -150,7 +180,7 @@ export function OutputSettings({
                   checked={useGpu && nvencAvailable && gpuAllowed}
                   disabled={!nvencAvailable || gpuLocked || !gpuAllowed}
                   onChange={(event) => onUseGpuChange(event.target.checked)}
-                  className="h-3.5 w-3.5 shrink-0 accent-lamp"
+                  className="h-4 w-4 shrink-0 accent-accent"
                 />
               </label>
             </>
@@ -160,10 +190,10 @@ export function OutputSettings({
                 value={maxConcurrency}
                 onChange={onConcurrencyChange}
               />
-              <FieldHint>{ptBR.outputSettings.audioConcurrencyHint}</FieldHint>
+              <FieldHint>{t.outputSettings.audioConcurrencyHint}</FieldHint>
             </div>
           )}
-        </div>
+        </AdvancedOptionsDisclosure>
       </div>
       {children}
     </div>

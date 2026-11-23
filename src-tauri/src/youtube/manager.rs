@@ -79,18 +79,17 @@ impl YoutubeManager {
     }
 
     pub fn add_job(&self, request: AddYoutubeDownloadRequest) -> AppResult<YoutubeDownloadJob> {
-        if request.url.trim().is_empty() {
-            return Err(AppError::validation("Cole um link de vídeo"));
-        }
+        let url = crate::youtube::validate_media_url(&request.url)?.to_string();
         if request.output_dir.trim().is_empty() {
             return Err(AppError::validation(
                 "Escolha uma pasta para salvar o arquivo",
             ));
         }
+        validate_download_options(&request.options)?;
 
         let job = YoutubeDownloadJob {
             id: Uuid::new_v4().to_string(),
-            url: request.url,
+            url,
             title: if request.title.trim().is_empty() {
                 "Vídeo".into()
             } else {
@@ -115,5 +114,53 @@ impl YoutubeManager {
 
     pub fn retry_job(&self, id: &str) -> AppResult<YoutubeDownloadJob> {
         self.queue.retry_job(id)
+    }
+}
+
+fn validate_download_options(options: &crate::types::YoutubeDownloadOptions) -> AppResult<()> {
+    if !matches!(options.mode.as_str(), "video" | "audio") {
+        return Err(AppError::validation("Modo de download inválido"));
+    }
+    if !matches!(options.quality.as_str(), "best" | "1080p" | "720p" | "480p") {
+        return Err(AppError::validation("Qualidade de vídeo inválida"));
+    }
+    if !matches!(options.audio_format.as_str(), "m4a" | "mp3") {
+        return Err(AppError::validation("Formato de áudio inválido"));
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_download_options;
+    use crate::types::YoutubeDownloadOptions;
+    use crate::youtube::validate_media_url;
+
+    #[test]
+    fn validates_media_urls() {
+        assert_eq!(
+            validate_media_url("  https://youtu.be/abc  ").unwrap(),
+            "https://youtu.be/abc"
+        );
+        assert!(validate_media_url("--exec calc").is_err());
+        assert!(validate_media_url("file:///C:/test.mp4").is_err());
+        assert!(validate_media_url("   ").is_err());
+    }
+
+    #[test]
+    fn validates_download_options_whitelist() {
+        let ok = YoutubeDownloadOptions {
+            mode: "video".into(),
+            quality: "1080p".into(),
+            audio_format: "m4a".into(),
+        };
+        assert!(validate_download_options(&ok).is_ok());
+
+        let bad = YoutubeDownloadOptions {
+            mode: "video".into(),
+            quality: "1080p".into(),
+            audio_format: "--exec".into(),
+        };
+        assert!(validate_download_options(&bad).is_err());
     }
 }

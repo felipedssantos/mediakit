@@ -1,4 +1,4 @@
-use crate::types::{EncodeOptions, MediaInfo};
+use crate::types::{EncodeOptions, GpuVendor, MediaInfo};
 
 pub fn video_container(options: &EncodeOptions) -> &'static str {
     match options
@@ -58,6 +58,7 @@ pub fn append_convert_video(
     args: &mut Vec<String>,
     options: &EncodeOptions,
     media: Option<&MediaInfo>,
+    gpu_vendor: Option<GpuVendor>,
 ) {
     let container = video_container(options);
     if can_copy_streams(container, options, media) {
@@ -69,7 +70,7 @@ pub fn append_convert_video(
     match container {
         "webm" => append_webm(args, options),
         "avi" => append_avi(args, options),
-        _ => append_compress(args, options, "h264", 18),
+        _ => append_compress(args, options, "h264", 18, gpu_vendor),
     }
 }
 
@@ -78,48 +79,106 @@ pub fn append_compress(
     options: &EncodeOptions,
     default_codec: &str,
     default_crf: u32,
+    gpu_vendor: Option<GpuVendor>,
 ) {
     let use_gpu = options.use_gpu.unwrap_or(options.preset_id == "gpu_nvenc");
     let requested = options.video_codec.as_deref().unwrap_or(default_codec);
     let crf = options.crf.unwrap_or(default_crf);
+    let is_hevc = matches!(requested, "hevc" | "h265" | "hevc_nvenc" | "libx265");
 
-    if use_gpu || requested.contains("nvenc") {
-        let nvenc = match requested {
-            "hevc" | "h265" | "hevc_nvenc" => "hevc_nvenc",
-            _ => "h264_nvenc",
-        };
-        args.extend([
-            "-c:v".into(),
-            nvenc.into(),
-            "-preset".into(),
-            "p4".into(),
-            "-rc".into(),
-            "vbr".into(),
-            "-cq".into(),
-            crf.to_string(),
-            "-b:v".into(),
-            "0".into(),
-        ]);
+    let active_gpu = if use_gpu {
+        gpu_vendor.or_else(|| requested.contains("nvenc").then_some(GpuVendor::Nvidia))
+    } else if requested.contains("nvenc") {
+        Some(GpuVendor::Nvidia)
     } else {
-        let (codec, tag_hvc1) = match requested {
-            "hevc" | "h265" | "libx265" => ("libx265", true),
-            _ => ("libx264", false),
-        };
-        args.extend([
-            "-c:v".into(),
-            codec.into(),
-            "-preset".into(),
-            "medium".into(),
-            "-crf".into(),
-            crf.to_string(),
-        ]);
-        if tag_hvc1 {
-            args.extend(["-tag:v".into(), "hvc1".into()]);
+        None
+    };
+
+    let mut vaapi_upload = false;
+    match active_gpu {
+        Some(GpuVendor::Nvidia) => {
+            let encoder = if is_hevc { "hevc_nvenc" } else { "h264_nvenc" };
+            args.extend([
+                "-c:v".into(),
+                encoder.into(),
+                "-preset".into(),
+                "p4".into(),
+                "-rc".into(),
+                "vbr".into(),
+                "-cq".into(),
+                crf.to_string(),
+                "-b:v".into(),
+                "0".into(),
+            ]);
+        }
+        Some(GpuVendor::Amd) => {
+            let encoder = if is_hevc { "hevc_amf" } else { "h264_amf" };
+            args.extend([
+                "-c:v".into(),
+                encoder.into(),
+                "-quality".into(),
+                "balanced".into(),
+                "-rc".into(),
+                "cqp".into(),
+                "-qp_i".into(),
+                crf.to_string(),
+                "-qp_p".into(),
+                crf.to_string(),
+            ]);
+        }
+        Some(GpuVendor::Intel) => {
+            let encoder = if is_hevc { "hevc_qsv" } else { "h264_qsv" };
+            args.extend([
+                "-c:v".into(),
+                encoder.into(),
+                "-preset".into(),
+                "medium".into(),
+                "-global_quality".into(),
+                crf.to_string(),
+            ]);
+        }
+        Some(GpuVendor::Apple) => {
+            let encoder = if is_hevc {
+                "hevc_videotoolbox"
+            } else {
+                "h264_videotoolbox"
+            };
+            let q = (100_i32 - (crf as i32 * 2)).clamp(20, 90);
+            args.extend(["-c:v".into(), encoder.into(), "-q:v".into(), q.to_string()]);
+        }
+        Some(GpuVendor::Vaapi) => {
+            let encoder = if is_hevc { "hevc_vaapi" } else { "h264_vaapi" };
+            vaapi_upload = true;
+            args.extend(["-c:v".into(), encoder.into(), "-qp".into(), crf.to_string()]);
+        }
+        None => {
+            let (codec, tag_hvc1) = if is_hevc {
+                ("libx265", true)
+            } else {
+                ("libx264", false)
+            };
+            args.extend([
+                "-c:v".into(),
+                codec.into(),
+                "-preset".into(),
+                "medium".into(),
+                "-crf".into(),
+                crf.to_string(),
+            ]);
+            if tag_hvc1 {
+                args.extend(["-tag:v".into(), "hvc1".into()]);
+            }
         }
     }
 
-    if let Some(scale) = scale_filter(options.resolution.as_deref()) {
-        args.extend(["-vf".into(), scale]);
+    let vf = match (scale_filter(options.resolution.as_deref()), vaapi_upload) {
+        (Some(scale), true) => Some(format!("{scale},format=nv12,hwupload")),
+        (Some(scale), false) => Some(scale),
+        (None, true) => Some("format=nv12,hwupload".into()),
+        (None, false) => None,
+    };
+    if let Some(filter) = vf {
+        args.extend(["-vf".into(), filter]);
     }
 
     let audio_codec = options.audio_codec.as_deref().unwrap_or("aac");

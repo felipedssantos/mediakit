@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 import { defaultPictureDir } from "../lib/api/screenshot";
 
-const STORAGE_KEY = "conversor-screenshot-output-dir";
+const STORAGE_KEY = "mediakit-screenshot-output-dir";
 
 interface ScreenshotSettingsState {
   outputDir: string;

@@ -1,7 +1,7 @@
+import { File, Trash2, X } from "lucide-react";
 import type { CSSProperties } from "react";
-import { X } from "lucide-react";
 
-import { ptBR } from "../../i18n/pt-BR";
+import { useT } from "../../hooks/useLocale";
 import { formatBytes } from "../../lib/presets";
 import type { PendingFile } from "../../types/job";
 
@@ -12,6 +12,7 @@ interface PendingFilesListProps {
   totalBytes: number;
   formatMeta: (file: PendingFile) => string;
   onRemove: (path: string) => void;
+  onClearAll?: () => void;
 }
 
 export function PendingFilesList({
@@ -21,37 +22,43 @@ export function PendingFilesList({
   totalBytes,
   formatMeta,
   onRemove,
+  onClearAll,
 }: PendingFilesListProps) {
+  const t = useT();
   if (files.length === 0) {
     return (
-      <div className="flex flex-1 items-center border border-dashed border-steel-dim px-3 py-5 text-sm text-paint-faint">
+      <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-line bg-inset px-4 py-6 text-center text-xs text-ink-3">
         {emptyMessage}
       </div>
     );
   }
 
   return (
-    <>
-      <ul className="border border-rule">
+    <div className="flex flex-col gap-2">
+      <ul className="surface-card max-h-56 divide-y divide-line overflow-y-auto rounded-2xl">
         {files.map((file, index) => (
           <li
             key={file.path}
-            className={`board-row-in flex items-center justify-between gap-3 px-2.5 py-1.5 ${
-              index > 0 ? "border-t border-rule" : ""
-            }`}
+            className="ui-enter flex items-center justify-between gap-3 px-3.5 py-2.5"
             style={
               {
-                "--stagger": `${Math.min(index, 5) * 28}ms`,
+                "--stagger": `${Math.min(index, 5) * 20}ms`,
               } as CSSProperties
             }
           >
-            <div className="flex min-w-0 items-baseline gap-2.5">
-              <span className="cell shrink-0 text-[11px] text-paint-faint">
-                {String(index + 1).padStart(2, "0")}
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-elevated text-ink-2">
+                <File size={15} />
               </span>
               <div className="min-w-0">
-                <p className="truncate text-sm text-paint">{file.name}</p>
-                <p className="cell truncate text-[11px] text-paint-faint">
+                <p className="truncate text-sm font-medium text-ink">
+                  {file.name}
+                </p>
+                <p
+                  className={`mono-num truncate text-[11px] ${
+                    file.error ? "text-danger" : "text-ink-2"
+                  }`}
+                >
                   {file.error ? file.error : formatMeta(file)}
                 </p>
               </div>
@@ -59,18 +66,31 @@ export function PendingFilesList({
             <button
               type="button"
               onClick={() => onRemove(file.path)}
-              className="ink shrink-0 p-1 text-paint-faint hover:text-fault"
-              aria-label={ptBR.common.removeItem(file.name)}
+              className="ui-control shrink-0 rounded-lg p-1.5 text-ink-3 hover:bg-danger-soft hover:text-danger"
+              aria-label={t.common.removeItem(file.name)}
             >
-              <X size={13} />
+              <X size={14} />
             </button>
           </li>
         ))}
       </ul>
-      <p className="cell mt-1.5 text-[11px] text-paint-faint">
-        {ptBR.common.filesCount(validCount)} · {formatBytes(totalBytes)}{" "}
-        {ptBR.converter.totalSizeSuffix}
-      </p>
-    </>
+
+      <div className="flex items-center justify-between gap-2 px-1">
+        <p className="mono-num text-xs text-ink-2">
+          {t.common.filesCount(validCount)} · {formatBytes(totalBytes)}{" "}
+          {t.converter.totalSizeSuffix}
+        </p>
+        {onClearAll && files.length > 1 && (
+          <button
+            type="button"
+            onClick={onClearAll}
+            className="ui-control inline-flex items-center gap-1 text-xs font-medium text-ink-2 hover:text-danger"
+          >
+            <Trash2 size={12} />
+            <span>{t.common.clearAll}</span>
+          </button>
+        )}
+      </div>
+    </div>
   );
 }

@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { SnipAnnotationsLayer } from "../components/snip/SnipAnnotationsLayer";
 import { SnipToolbar, type OverlayTool } from "../components/snip/SnipToolbar";
+import { useT } from "../hooks/useLocale";
 import { useSnipSession } from "../hooks/useSnipSession";
-import { ptBR } from "../i18n/pt-BR";
 import {
   fontSizeFor,
   isAnnotateTool,
@@ -22,6 +22,7 @@ import {
 import type { SnipMode } from "../types/screenshot";
 
 export function SnipOverlayPage() {
+  const t = useT();
   const [tool, setTool] = useState<OverlayTool>("window");
   const textInputRef = useRef<HTMLInputElement>(null);
 
@@ -103,17 +104,17 @@ export function SnipOverlayPage() {
 
   const hint = isAnnotateTool(tool)
     ? tool === "text"
-      ? ptBR.snip.hintText
+      ? t.snip.hintText
       : tool === "arrow"
-        ? ptBR.snip.hintArrow
-        : ptBR.snip.hintRect
+        ? t.snip.hintArrow
+        : t.snip.hintRect
     : tool === "window"
       ? hovered
         ? hovered.title
-        : ptBR.snip.hintWindowFallback
+        : t.snip.hintWindowFallback
       : tool === "region"
-        ? ptBR.snip.hintRegion
-        : ptBR.snip.hintFullscreen;
+        ? t.snip.hintRegion
+        : t.snip.hintFullscreen;
 
   const cursorClass =
     tool === "region" || tool === "rect" || tool === "arrow"

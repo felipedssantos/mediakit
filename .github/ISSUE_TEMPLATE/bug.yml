@@ -1,5 +1,5 @@
 name: Bug report
-description: Report an unexpected error or broken behavior in Conversor
+description: Report an unexpected error or broken behavior in MediaKit
 title: "[Bug]: "
 labels: ["bug"]
 body:
@@ -19,7 +19,7 @@ body:
       label: Steps to reproduce
       description: How can maintainers reproduce the issue?
       placeholder: |
-        1. Open Conversor
+        1. Open MediaKit
         2. Drop a file / paste a URL
         3. Select preset '...'
         4. See error

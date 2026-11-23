@@ -1,6 +1,6 @@
-# Contributing to Conversor
+# Contributing to MediaKit
 
-Thank you for your interest in contributing to Conversor!
+Thank you for your interest in contributing to MediaKit!
 
 ## Prerequisites
 
@@ -13,8 +13,8 @@ Thank you for your interest in contributing to Conversor!
 
 1. Fork and clone the repository:
    ```powershell
-   git clone https://github.com/felipedssantos/conversor.git
-   cd conversor
+   git clone https://github.com/felipedssantos/mediakit.git
+   cd mediakit
    ```
 2. Install JS dependencies:
    ```powershell

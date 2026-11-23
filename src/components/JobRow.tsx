@@ -1,9 +1,13 @@
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
-import { ptBR } from "../i18n/pt-BR";
-import { FlapText } from "./FlapText";
+import { useT } from "../hooks/useLocale";
+import {
+  TONE_BADGE,
+  TONE_EDGE,
+  type BoardStatus,
+} from "../lib/boardStatus";
+import { animateStaggerIn } from "../lib/motion";
 import { ProgressBar } from "./ProgressBar";
-import { TONE_EDGE, TONE_TEXT, type BoardStatus } from "../lib/boardStatus";
 
 interface JobRowProps {
   line: number;
@@ -17,7 +21,13 @@ interface JobRowProps {
   actions: ReactNode;
 }
 
-/** Item da fila: título, status e progresso. */
+const LEFT_ACCENT = {
+  idle: "border-l-line-strong",
+  running: "border-l-accent",
+  cleared: "border-l-ok",
+  fault: "border-l-danger",
+} as const;
+
 export function JobRow({
   line,
   title,
@@ -29,6 +39,18 @@ export function JobRow({
   error,
   actions,
 }: JobRowProps) {
+  const t = useT();
+  const cardRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    return animateStaggerIn(cardRef.current, {
+      y: 8,
+      scale: 0.99,
+      duration: 280,
+      staggerMs: 0,
+    });
+  }, []);
+
   const percent =
     status.tone === "cleared" ? 100 : Math.min(99, Math.floor(progress));
   const barTone =
@@ -40,57 +62,60 @@ export function JobRow({
 
   return (
     <article
-      className={`board-row-in border-b border-rule px-3 py-2.5 ${
-        status.tone === "running" ? "bg-flap" : ""
-      }`}
-      style={{ "--stagger": `${Math.min(line - 1, 5) * 28}ms` } as CSSProperties}
+      ref={cardRef}
+      className={`surface-card rounded-xl border-l-2 p-3.5 ${LEFT_ACCENT[status.tone]}`}
     >
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="cell shrink-0 text-xs text-paint-faint">
-          {String(line).padStart(2, "0")}
+      <div className="flex items-center justify-between gap-2">
+        <span className="mono-num rounded bg-elevated px-1.5 py-0.5 text-[10px] font-semibold text-ink-3">
+          #{String(line).padStart(2, "0")}
         </span>
-        <span className="flex items-center gap-2">
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${TONE_BADGE[status.tone]}`}
+        >
           <span
             aria-hidden
-            className={`h-1.5 w-1.5 shrink-0 ${TONE_EDGE[status.tone]} ${
-              status.tone === "running" ? "lamp-pulse" : ""
+            className={`h-1.5 w-1.5 rounded-full ${TONE_EDGE[status.tone]} ${
+              status.tone === "running" ? "status-pulse" : ""
             }`}
           />
-          <FlapText
-            text={statusLabel ?? status.label}
-            className={`text-[11px] ${TONE_TEXT[status.tone]}`}
-          />
+          <span>{statusLabel ?? status.label}</span>
         </span>
       </div>
 
       <p
-        className="mt-1.5 truncate text-sm font-medium text-paint"
+        className="mt-2 truncate text-sm font-semibold text-ink"
         title={title}
       >
         {title}
       </p>
-      <p className="cell mt-0.5 truncate text-[11px] text-paint-faint">
+      <p className="mono-num mt-0.5 truncate text-[11px] text-ink-2">
         {detail}
       </p>
 
-      <div className="mt-2.5">
-        <ProgressBar value={progress} tone={barTone} />
-        <div className="cell mt-1 flex justify-between text-[11px] text-paint-faint">
+      <div className="mt-3">
+        <ProgressBar
+          value={progress}
+          tone={barTone}
+          active={status.tone === "running"}
+        />
+        <div className="mono-num mt-1.5 flex justify-between text-[11px] font-medium text-ink-2">
           <span>{percent}%</span>
-          {status.tone === "running" && speed ? <span>{speed}</span> : null}
+          {status.tone === "running" && speed ? (
+            <span className="text-accent">{speed}</span>
+          ) : null}
         </div>
       </div>
 
       {error && (
-        <p className="mt-2 text-xs leading-5 text-fault">
-          <span className="stamp mr-1.5 text-fault">
-            {ptBR.common.reasonStamp}
+        <p className="mt-2.5 rounded-lg border border-danger/20 bg-danger-soft px-2.5 py-2 text-xs leading-5 text-danger">
+          <span className="mr-1.5 font-semibold">
+            {t.common.reasonStamp}:
           </span>
           <span className="line-clamp-3 align-middle">{error}</span>
         </p>
       )}
 
-      <div className="mt-2.5 flex flex-wrap gap-2">{actions}</div>
+      <div className="mt-3 flex flex-wrap gap-2">{actions}</div>
     </article>
   );
 }
@@ -108,10 +133,10 @@ export function RowAction({
     <button
       type="button"
       onClick={onClick}
-      className={`stamp inline-flex items-center gap-1.5 border border-steel-dim px-2 py-1 text-paint-dim ink ${
+      className={`ui-btn inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium ${
         danger
-          ? "hover:border-fault hover:text-fault"
-          : "hover:border-lamp hover:text-lamp"
+          ? "border-danger/25 bg-danger-soft text-danger hover:border-danger"
+          : "border-line-strong bg-elevated text-ink hover:border-accent hover:text-accent"
       }`}
     >
       {children}

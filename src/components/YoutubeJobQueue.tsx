@@ -1,4 +1,4 @@
-import { ptBR } from "../i18n/pt-BR";
+import { useT } from "../hooks/useLocale";
 import type { YoutubeDownloadJob } from "../types/youtube";
 import { JobQueueList } from "./JobQueueList";
 import { YoutubeJobCard } from "./YoutubeJobCard";
@@ -14,11 +14,12 @@ export function YoutubeJobQueue({
   onCancel,
   onRetry,
 }: YoutubeJobQueueProps) {
+  const t = useT();
   return (
     <JobQueueList
       jobs={jobs}
       fill
-      emptyDetail={ptBR.youtube.queueEmpty}
+      emptyDetail={t.youtube.queueEmpty}
       renderItem={(job, line) => (
         <YoutubeJobCard
           key={job.id}

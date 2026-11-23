@@ -8,7 +8,7 @@ import {
   retryJob,
   setMaxConcurrency,
 } from "../lib/api/jobs";
-import type { AddJobRequest, Job } from "../types/job";
+import type { AddJobRequest, GpuVendor, Job } from "../types/job";
 import {
   createJobQueueStore,
   formatErrorMessage,
@@ -18,6 +18,8 @@ import {
 interface JobsExtra {
   loading: boolean;
   nvenc: boolean;
+  gpu: GpuVendor | null;
+  availableGpus: GpuVendor[];
   maxConcurrency: number;
   hydrate: () => Promise<void>;
   enqueue: (items: AddJobRequest[]) => Promise<void>;
@@ -30,6 +32,8 @@ export const useJobs = createJobQueueStore<Job, JobsExtra>(
   (set) => ({
     loading: true,
     nvenc: false,
+    gpu: null,
+    availableGpus: [],
     maxConcurrency: 1,
     hydrate: async () => {
       try {
@@ -41,7 +45,9 @@ export const useJobs = createJobQueueStore<Job, JobsExtra>(
         set({
           jobs,
           maxConcurrency: concurrency,
-          nvenc: hw.nvenc,
+          nvenc: hw.nvenc || hw.gpu !== null,
+          gpu: hw.gpu ?? null,
+          availableGpus: hw.available_gpus ?? [],
           loading: false,
           error: null,
         });

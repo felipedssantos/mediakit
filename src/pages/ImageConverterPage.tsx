@@ -3,21 +3,19 @@ import { useCallback, useState } from "react";
 import { DropZone } from "../components/DropZone";
 import { ImageOutputSettings } from "../components/ImageOutputSettings";
 import { PresetSelector } from "../components/PresetSelector";
-import { SectionRule } from "../components/SectionRule";
+import { StepHeader } from "../components/StepHeader";
 import { ConverterLayout } from "../components/converter/ConverterLayout";
 import { PendingFilesList } from "../components/converter/PendingFilesList";
+import { useAppSettings } from "../hooks/useAppSettings";
 import { useFileDrop } from "../hooks/useFileDrop";
 import { useJobEvents, useJobs } from "../hooks/useJobs";
+import { getT, useT } from "../hooks/useLocale";
 import { useMediaInfo } from "../hooks/useMediaInfo";
-import { ptBR } from "../i18n/pt-BR";
 import { pickImageFiles, pickOutputDirectory } from "../lib/api/files";
 import { suggestOutputPath } from "../lib/api/jobs";
 import {
   IMAGE_COMPRESS_PRESETS,
-  IMAGE_CONVERT_PRESETS,
-  IMAGE_OUTPUT_CODES,
   IMAGE_OUTPUT_FORMATS,
-  IMAGE_PRESET_CODES,
   isImageCompressPreset,
   isImageConvertPreset,
   isImagePath,
@@ -44,9 +42,21 @@ function dimensionsLabel(
 }
 
 export function ImageConverterPage({ mode, onBack }: ImageConverterPageProps) {
+  const t = useT();
   const compress = mode === "compress";
-  const presets = compress ? IMAGE_COMPRESS_PRESETS : IMAGE_CONVERT_PRESETS;
-  const defaultPreset = (presets[0]?.id ?? "img_compress_web") as ImagePresetId;
+  const presets = IMAGE_COMPRESS_PRESETS.map((item) => ({
+    ...item,
+    ...t.imagePresets[item.id],
+  }));
+  const appSettings = useAppSettings.getState();
+  const initialCompressPreset =
+    presets.find((item) => item.id === appSettings.imageCompressPreset) ??
+    presets[0];
+  const defaultPreset = (
+    compress
+      ? (initialCompressPreset?.id ?? "img_compress_web")
+      : presetIdForImageFormat(appSettings.imageConvertFormat)
+  ) as ImagePresetId;
 
   useJobEvents();
   const allJobs = useJobs((state) => state.jobs);
@@ -64,12 +74,18 @@ export function ImageConverterPage({ mode, onBack }: ImageConverterPageProps) {
 
   const { files, probing, addPaths, removePath, clear } = useMediaInfo();
   const [presetId, setPresetId] = useState<ImagePresetId>(defaultPreset);
-  const [quality, setQuality] = useState(compress ? 75 : 85);
+  const [quality, setQuality] = useState(
+    compress ? (initialCompressPreset?.defaultQuality ?? 75) : 85,
+  );
   const [resolution, setResolution] = useState("original");
   const [imageFormat, setImageFormat] = useState<ImageFormat>(
-    compress ? "webp" : "jpeg",
+    compress
+      ? (initialCompressPreset?.format ?? "webp")
+      : appSettings.imageConvertFormat,
   );
-  const [outputDir, setOutputDir] = useState<string | null>(null);
+  const [outputDir, setOutputDir] = useState<string | null>(
+    appSettings.defaultOutputDir,
+  );
   const [busy, setBusy] = useState(false);
   const [dropError, setDropError] = useState<string | null>(null);
 
@@ -92,11 +108,11 @@ export function ImageConverterPage({ mode, onBack }: ImageConverterPageProps) {
       const images = paths.filter(isImagePath);
       const skipped = paths.length - images.length;
       if (skipped > 0 && images.length === 0) {
-        setDropError(ptBR.imageConverter.noImagesRecognized);
+        setDropError(getT().imageConverter.noImagesRecognized);
         return;
       }
       setDropError(
-        skipped > 0 ? ptBR.imageConverter.ignoredFiles(skipped) : null,
+        skipped > 0 ? getT().imageConverter.ignoredFiles(skipped) : null,
       );
       await addPaths(images);
     },
@@ -153,87 +169,102 @@ export function ImageConverterPage({ mode, onBack }: ImageConverterPageProps) {
   }
 
   const startLabel = busy
-    ? ptBR.common.queuing
-    : validFiles.length > 1
-      ? ptBR.imageConverter.startMany(validFiles.length)
-      : ptBR.common.start;
+    ? t.common.queuing
+    : compress
+      ? validFiles.length > 1
+        ? t.imageConverter.startManyCompress(validFiles.length)
+        : t.imageConverter.startSingleCompress
+      : validFiles.length > 1
+        ? t.imageConverter.startManyConvert(validFiles.length)
+        : t.imageConverter.startSingleConvert;
+
+  const targetLabel = compress
+    ? (t.imagePresets[presetId]?.label ?? "")
+    : imageFormat.toUpperCase();
+  const summary =
+    validFiles.length > 0
+      ? `${t.common.filesCount(validFiles.length)} · ${formatBytes(totalBytes)} → ${targetLabel}`
+      : null;
 
   return (
     <ConverterLayout
       title={
         compress
-          ? ptBR.imageConverter.compressTitle
-          : ptBR.imageConverter.convertTitle
+          ? t.imageConverter.compressTitle
+          : t.imageConverter.convertTitle
       }
       detail={
         compress
-          ? ptBR.imageConverter.compressDetail
-          : ptBR.imageConverter.convertDetail
+          ? t.imageConverter.compressDetail
+          : t.imageConverter.convertDetail
       }
       error={error ?? dropError}
       onBack={onBack}
       dropSection={
-        <section className="grid shrink-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+        <section className="grid shrink-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
           <div className="flex min-h-0 flex-col">
-            <SectionRule
-              step="01"
-              title={ptBR.imageConverter.stepChooseFiles}
+            <StepHeader
+              step="1"
+              title={t.imageConverter.stepChooseFiles}
             />
             <DropZone
               disabled={probing}
               probing={probing}
               compact={files.length > 0}
               onBrowse={() => void handleBrowse()}
-              title={ptBR.imageConverter.dropTitle}
+              title={t.imageConverter.dropTitle}
               hint={
                 compress
-                  ? ptBR.imageConverter.dropCompressHint
-                  : ptBR.imageConverter.dropConvertHint
+                  ? t.imageConverter.dropCompressHint
+                  : t.imageConverter.dropConvertHint
               }
-              probingHint={ptBR.imageConverter.dropProbingHint}
+              probingHint={t.imageConverter.dropProbingHint}
+              formats={["JPG", "PNG", "WebP", "HEIC", "AVIF"]}
             />
           </div>
 
           <div className="flex min-h-0 flex-col">
-            <SectionRule
-              step={String(files.length).padStart(2, "0")}
-              title={ptBR.imageConverter.selectedTitle}
+            <StepHeader
+              step={String(files.length)}
+              title={t.imageConverter.selectedTitle}
             />
             <PendingFilesList
               files={files}
-              emptyMessage={ptBR.imageConverter.noneSelected}
+              emptyMessage={t.imageConverter.noneSelected}
               validCount={validFiles.length}
               totalBytes={totalBytes}
               formatMeta={(file) =>
                 `${dimensionsLabel(file.info?.video?.width, file.info?.video?.height)} · ${formatBytes(file.info?.size ?? 0)}`
               }
               onRemove={removePath}
+              onClearAll={clear}
             />
           </div>
         </section>
       }
       presetSection={
         <section className="shrink-0">
-          <SectionRule
-            step="02"
+          <StepHeader
+            step="2"
             title={
               compress
-                ? ptBR.imageConverter.stepCompressPreset
-                : ptBR.imageConverter.stepConvertPreset
+                ? t.imageConverter.stepCompressPreset
+                : t.imageConverter.stepConvertPreset
             }
           />
           {compress ? (
             <PresetSelector
               value={presetId}
               presets={presets}
-              codes={IMAGE_PRESET_CODES}
               onChange={handleCompressPresetChange}
             />
           ) : (
             <PresetSelector
               value={imageFormat}
-              presets={IMAGE_OUTPUT_FORMATS}
-              codes={IMAGE_OUTPUT_CODES}
+              presets={IMAGE_OUTPUT_FORMATS.map((item) => ({
+                ...item,
+                ...t.imageFormats[item.id],
+              }))}
               onChange={(format) => {
                 setImageFormat(format);
                 setPresetId(presetIdForImageFormat(format));
@@ -246,7 +277,7 @@ export function ImageConverterPage({ mode, onBack }: ImageConverterPageProps) {
       }
       settingsSection={
         <section>
-          <SectionRule step="03" title={ptBR.common.stepAdjustments} />
+          <StepHeader step="3" title={t.common.stepAdjustments} />
           <ImageOutputSettings
             quality={quality}
             resolution={resolution}
@@ -265,17 +296,18 @@ export function ImageConverterPage({ mode, onBack }: ImageConverterPageProps) {
       busy={busy}
       canStart={validFiles.length > 0}
       startLabel={startLabel}
-      startHint={ptBR.imageConverter.startHint}
+      startHint={t.imageConverter.startHint}
+      summary={summary}
       onStart={() => void handleStart()}
       queueTitle={
         compress
-          ? ptBR.imageConverter.queueCompressTitle
-          : ptBR.imageConverter.queueConvertTitle
+          ? t.imageConverter.queueCompressTitle
+          : t.imageConverter.queueConvertTitle
       }
       queueEmpty={
         compress
-          ? ptBR.imageConverter.queueCompressEmpty
-          : ptBR.imageConverter.queueConvertEmpty
+          ? t.imageConverter.queueCompressEmpty
+          : t.imageConverter.queueConvertEmpty
       }
       jobs={jobs}
       onCancel={(id) => void cancel(id)}

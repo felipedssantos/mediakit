@@ -1,21 +1,24 @@
-import { Download, Search } from "lucide-react";
+import { ClipboardPaste, Download, Loader2, Search } from "lucide-react";
+import { useEffect, useRef } from "react";
 
-import { BoardHeader } from "../components/BoardHeader";
-import { BoardWait } from "../components/BoardWait";
+import { ErrorBanner } from "../components/ErrorBanner";
 import { FieldHint } from "../components/FieldHint";
-import { SectionRule } from "../components/SectionRule";
+import { QueueSidebar } from "../components/QueueSidebar";
+import { StepHeader } from "../components/StepHeader";
+import { StepProgressBar } from "../components/StepProgressBar";
 import { YoutubeJobQueue } from "../components/YoutubeJobQueue";
 import { PendingLinksList } from "../components/youtube/PendingLinksList";
 import { YoutubeDownloadOptionsPanel } from "../components/youtube/YoutubeDownloadOptionsPanel";
+import { useT } from "../hooks/useLocale";
 import { useYoutubeForm } from "../hooks/useYoutubeForm";
 import { useYoutubeJobEvents, useYoutubeJobs } from "../hooks/useYoutubeJobs";
-import { ptBR } from "../i18n/pt-BR";
+import { animatePageEnter } from "../lib/motion";
 
-interface YoutubePageProps {
-  onBack: () => void;
-}
+export function YoutubePage() {
+  const t = useT();
+  const mainRef = useRef<HTMLElement>(null);
+  useEffect(() => animatePageEnter(mainRef.current), []);
 
-export function YoutubePage({ onBack }: YoutubePageProps) {
   useYoutubeJobEvents();
   const jobs = useYoutubeJobs((state) => state.jobs);
   const queueError = useYoutubeJobs((state) => state.error);
@@ -24,70 +27,111 @@ export function YoutubePage({ onBack }: YoutubePageProps) {
 
   const form = useYoutubeForm();
 
+  async function handlePaste() {
+    try {
+      const clip = await navigator.clipboard.readText();
+      if (!clip.trim()) return;
+      form.setUrlText((prev) =>
+        prev.trim() ? `${prev.trimEnd()}\n${clip.trim()}` : clip.trim(),
+      );
+    } catch {
+      // Clipboard access may be blocked; user can paste directly with Ctrl+V.
+    }
+  }
+
   const downloadLabel = form.busy
-    ? ptBR.common.queuing
+    ? t.common.queuing
     : form.readyItems.length > 1
-      ? ptBR.youtube.downloadMany(form.readyItems.length)
-      : ptBR.youtube.downloadSingle;
+      ? t.youtube.downloadMany(form.readyItems.length)
+      : t.youtube.downloadSingle;
 
   return (
-    <main className="board-shutter flex h-full min-h-0 flex-col bg-void text-paint">
-      <BoardHeader
-        title={ptBR.youtube.title}
-        detail={ptBR.youtube.detail}
-        onBack={onBack}
-      />
+    <main
+      ref={mainRef}
+      className="bg-studio-canvas flex h-full min-h-0 flex-col text-ink"
+    >
+      <header className="shrink-0 border-b border-line bg-surface px-6 py-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-ink">
+              {t.youtube.title}
+            </h1>
+            <p className="mt-0.5 text-sm text-ink-2">{t.youtube.detail}</p>
+          </div>
 
-      {(form.error || queueError) && (
-        <p className="shrink-0 border-b border-rule bg-flap px-4 py-2 text-sm text-fault">
-          <span className="stamp mr-2 text-fault">
-            {ptBR.common.errorStamp}
-          </span>
-          {form.error ?? queueError}
-        </p>
-      )}
+          <StepProgressBar
+            ariaLabel={t.youtube.stepsAriaLabel}
+            steps={[
+              t.youtube.stepLinksLabel,
+              t.youtube.stepFormatLabel,
+              t.youtube.stepDownloadLabel,
+            ]}
+            firstStepDone={form.readyItems.length > 0}
+          />
+        </div>
+      </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(300px,34%)]">
+      <ErrorBanner message={form.error ?? queueError} />
+
+      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(310px,36%)]">
         <div className="flex min-h-0 flex-col">
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-            <div className="flex flex-col gap-5">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            <div className="mx-auto flex max-w-4xl flex-col gap-6">
               <section>
-                <SectionRule step="01" title={ptBR.youtube.stepLinks} />
-                <textarea
-                  value={form.urlText}
-                  onChange={(event) => form.setUrlText(event.target.value)}
-                  rows={4}
-                  placeholder={ptBR.youtube.placeholder}
-                  className="cell w-full resize-y border border-steel-dim bg-flap px-3 py-2.5 text-sm text-paint outline-none placeholder:text-paint-faint focus:border-lamp"
+                <StepHeader
+                  step="1"
+                  title={t.youtube.stepLinks}
+                  right={
+                    <button
+                      type="button"
+                      onClick={() => void handlePaste()}
+                      className="ui-btn inline-flex items-center gap-1.5 rounded-lg border border-line-strong bg-elevated px-2.5 py-1 text-xs font-medium text-ink hover:border-accent hover:text-accent"
+                    >
+                      <ClipboardPaste size={13} />
+                      <span>{t.youtube.pasteClipboard}</span>
+                    </button>
+                  }
                 />
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    disabled={form.probing || form.urlCount === 0}
-                    onClick={() => void form.handleProbe()}
-                    className="stamp ink inline-flex items-center gap-2 border border-steel-dim px-3.5 py-2 text-paint-dim hover:border-lamp hover:text-lamp disabled:opacity-50"
-                  >
-                    {form.probing ? (
-                      <BoardWait compact label={ptBR.youtube.searching} />
-                    ) : (
-                      <Search size={14} />
+                <div className="surface-card rounded-2xl p-3.5">
+                  <textarea
+                    value={form.urlText}
+                    onChange={(event) => form.setUrlText(event.target.value)}
+                    rows={3}
+                    placeholder={t.youtube.placeholder}
+                    className="mono-num w-full resize-y rounded-xl border border-line bg-inset px-3 py-2.5 text-xs leading-5 text-ink outline-none placeholder:text-ink-3 focus:border-accent"
+                  />
+                  <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      disabled={form.probing || form.urlCount === 0}
+                      onClick={() => void form.handleProbe()}
+                      className="ui-btn inline-flex items-center gap-1.5 rounded-lg border border-line-strong bg-elevated px-3 py-1.5 text-xs font-medium text-ink hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {form.probing ? (
+                        <Loader2 size={13} className="animate-spin text-accent" />
+                      ) : (
+                        <Search size={13} />
+                      )}
+                      <span>
+                        {form.probing
+                          ? t.youtube.searchingButton
+                          : form.urlCount > 1
+                            ? t.youtube.searchMany(form.urlCount)
+                            : t.youtube.searchSingle}
+                      </span>
+                    </button>
+
+                    {form.urlCount > 0 && !form.probing && (
+                      <span className="mono-num text-xs text-ink-2">
+                        {t.youtube.linksInList(form.urlCount)}
+                      </span>
                     )}
-                    {form.probing
-                      ? ptBR.youtube.searchingButton
-                      : form.urlCount > 1
-                        ? ptBR.youtube.searchMany(form.urlCount)
-                        : ptBR.youtube.searchSingle}
-                  </button>
-                  {form.urlCount > 0 && !form.probing && (
-                    <span className="cell text-xs text-paint-faint">
-                      {ptBR.youtube.linksInList(form.urlCount)}
-                    </span>
-                  )}
+                  </div>
                 </div>
-                <FieldHint>{ptBR.youtube.cookiesHint}</FieldHint>
+                <FieldHint>{t.youtube.cookiesHint}</FieldHint>
               </section>
 
-              <section className="flex flex-col gap-4">
+              <section className="flex flex-col gap-5">
                 <PendingLinksList
                   items={form.pending}
                   readyCount={form.readyItems.length}
@@ -107,39 +151,36 @@ export function YoutubePage({ onBack }: YoutubePageProps) {
               </section>
             </div>
           </div>
-          <div className="shrink-0 border-t border-rule bg-void px-4 py-3">
-            <button
-              type="button"
-              disabled={form.busy || form.readyItems.length === 0}
-              onClick={() => void form.handleDownload()}
-              className="stamp ink flex w-full items-center justify-center gap-2 border border-lamp bg-lamp px-3.5 py-2.5 text-void hover:bg-void hover:text-lamp disabled:cursor-not-allowed disabled:border-steel-dim disabled:bg-transparent disabled:text-paint-faint"
-            >
-              {form.busy ? (
-                <BoardWait compact label={ptBR.common.queuing} />
-              ) : (
-                <Download size={14} />
+
+          <div className="shrink-0 border-t border-line bg-surface px-6 py-3.5">
+            <div className="mx-auto flex max-w-4xl flex-col gap-1.5">
+              <button
+                type="button"
+                disabled={form.busy || form.readyItems.length === 0}
+                onClick={() => void form.handleDownload()}
+                className="ui-btn flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-accent-ink shadow-sm hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-elevated disabled:text-ink-3 disabled:shadow-none"
+              >
+                {form.busy ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Download size={16} />
+                )}
+                <span>{downloadLabel}</span>
+              </button>
+              {form.readyItems.length === 0 && (
+                <FieldHint>{t.youtube.downloadHint}</FieldHint>
               )}
-              {downloadLabel}
-            </button>
-            {form.readyItems.length === 0 && (
-              <FieldHint>{ptBR.youtube.downloadHint}</FieldHint>
-            )}
+            </div>
           </div>
         </div>
 
-        <aside className="flex min-h-0 flex-col border-t border-rule lg:border-l lg:border-t-0">
-          <div className="steel flex shrink-0 items-center justify-between gap-2 px-3 py-2">
-            <h2 className="stamp text-paint">{ptBR.youtube.queueTitle}</h2>
-            <span className="cell text-xs text-paint-dim">
-              {String(jobs.length).padStart(2, "0")}
-            </span>
-          </div>
+        <QueueSidebar title={t.youtube.queueTitle} count={jobs.length}>
           <YoutubeJobQueue
             jobs={jobs}
             onCancel={(id) => void cancel(id)}
             onRetry={(id) => void retry(id)}
           />
-        </aside>
+        </QueueSidebar>
       </div>
     </main>
   );

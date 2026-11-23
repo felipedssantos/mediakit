@@ -1,6 +1,6 @@
 # Architecture Overview
 
-**Conversor** is a local-first Windows desktop application built with **Tauri 2**, **React 19**, **TypeScript**, and **Rust**. All media inspection, transcoding, image processing, and video downloads run locally via bundled sidecar executables (`ffmpeg`, `ffprobe`, and `yt-dlp`).
+**MediaKit** is a local-first Windows desktop application built with **Tauri 2**, **React 19**, **TypeScript**, and **Rust**. All media inspection, transcoding, image processing, and video downloads run locally via bundled sidecar executables (`ffmpeg`, `ffprobe`, and `yt-dlp`).
 
 ## End-to-End Job Flow
 
@@ -51,5 +51,5 @@ flowchart LR
 ## Security Boundaries
 
 - **CSP (`src-tauri/tauri.conf.json`)**: Restricts scripts to `'self'`, fonts to `'self' data:`, IPC to `ipc: http://ipc.localhost`, and images to `'self' asset: http://asset.localhost https: data: blob:` (needed for yt-dlp remote thumbnails and local screenshot assets).
-- **Asset Protocol**: Scoped strictly to `$TEMP/conversor-screenshots/**` and `$APPLOCALDATA/screenshots/**`.
+- **Asset Protocol**: Scoped strictly to `$TEMP/mediakit-screenshots/**` and `$APPLOCALDATA/screenshots/**`.
 - **Capabilities (`src-tauri/capabilities/default.json`)**: Grants only window controls, `dialog:allow-open`, and `opener:allow-reveal-item-in-dir`. Sidecars are invoked exclusively from Rust without exposing `shell` IPC permissions to the webview.

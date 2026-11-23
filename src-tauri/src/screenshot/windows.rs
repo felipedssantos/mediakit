@@ -48,7 +48,7 @@ pub fn collect_windows() -> Vec<ScreenshotWindowInfo> {
             if title.trim().is_empty() && app_name.trim().is_empty() {
                 return None;
             }
-            if title == "Conversor" || title == "Selecionar área" {
+            if title == "MediaKit" || title == "Selecionar área" {
                 return None;
             }
             Some((

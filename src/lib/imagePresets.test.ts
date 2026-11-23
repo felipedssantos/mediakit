@@ -43,6 +43,10 @@ describe("imagePresets", () => {
     expect(isImagePath("no-extension")).toBe(false);
   });
 
+  it("marks a recommended preset for image compression", () => {
+    expect(IMAGE_COMPRESS_PRESETS.some((p) => p.recommended)).toBe(true);
+  });
+
   it("resolves presets by id and output format", () => {
     expect(imagePresetById("img_convert_png")?.defaultQuality).toBeNull();
     expect(imagePresetById("unknown")).toBeUndefined();

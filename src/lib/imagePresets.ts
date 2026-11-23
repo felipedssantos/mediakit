@@ -15,6 +15,7 @@ export interface ImagePresetDefinition {
   defaultQuality: number | null;
   format: ImageFormat;
   usesGpu: boolean;
+  recommended?: boolean;
 }
 
 export const IMAGE_PRESETS: ImagePresetDefinition[] = [
@@ -26,6 +27,7 @@ export const IMAGE_PRESETS: ImagePresetDefinition[] = [
     defaultQuality: 75,
     format: "webp",
     usesGpu: false,
+    recommended: true,
   },
   {
     id: "img_compress_quality",
@@ -136,6 +138,7 @@ export const IMAGE_OUTPUT_FORMATS: {
   label: string;
   bestFor: string;
   usesGpu: boolean;
+  recommended?: boolean;
 }[] = [
   {
     id: "jpeg",
@@ -143,6 +146,7 @@ export const IMAGE_OUTPUT_FORMATS: {
     label: "JPEG",
     bestFor: "O mais compatível com foto, e-mail e celular",
     usesGpu: false,
+    recommended: true,
   },
   {
     id: "png",

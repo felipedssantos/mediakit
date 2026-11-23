@@ -1,4 +1,4 @@
-# Conversor
+# MediaKit
 
 App desktop para Windows de compressão e conversão local de vídeo, imagem e áudio, além de download de mídia com FFmpeg e yt-dlp embutidos como sidecars.
 
@@ -6,7 +6,7 @@ App desktop para Windows de compressão e conversão local de vídeo, imagem e �
 
 ## Visão geral
 
-O Conversor roda 100% localmente na máquina do usuário usando **Tauri 2**, **React 19**, **TypeScript** e **Rust**, sem envio de arquivos para servidores externos:
+O MediaKit roda 100% localmente na máquina do usuário usando **Tauri 2**, **React 19**, **TypeScript** e **Rust**, sem envio de arquivos para servidores externos:
 
 - **Vídeo e áudio**: comprimir para envio rápido (H.264), comprimir preservando qualidade (H.265), acelerar via GPU NVIDIA (`h264_nvenc`), converter entre containers (`MP4`, `MKV`, `MOV`, `WebM`, `AVI`) e extrair áudio (`M4A`, `MP3`, `WAV`, `OGG`, `FLAC`).
 - **Imagens**: comprimir ou converter entre `JPEG`, `PNG`, `WebP`, `BMP` e `TIFF` (entrada inclui `JPG`, `PNG`, `WebP`, `BMP`, `TIFF`, `GIF`, `HEIC`, `HEIF`, `AVIF`).
@@ -33,8 +33,8 @@ O Conversor roda 100% localmente na máquina do usuário usando **Tauri 2**, **R
 1. Clone o repositório e instale as dependências JS:
 
 ```powershell
-git clone https://github.com/felipedssantos/conversor.git
-cd conversor
+git clone https://github.com/felipedssantos/mediakit.git
+cd mediakit
 npm install
 ```
 
@@ -74,15 +74,20 @@ npm run tauri dev
 
 Contribuições são bem-vindas! Leia [CONTRIBUTING.md](CONTRIBUTING.md), siga o [Código de Conduta](CODE_OF_CONDUCT.md) e consulte [SECURITY.md](SECURITY.md) para relatar vulnerabilidades.
 
+## Aviso legal e privacidade
+
+- **Uso responsável**: o MediaKit é uma ferramenta local de conversão e download. Use o recurso de download apenas para conteúdos que você tem permissão para baixar, respeitando direitos autorais e os Termos de Serviço das plataformas.
+- **Cookies de navegador**: quando necessário para acessar mídia, o `yt-dlp` pode ler cookies de navegadores instalados localmente (`--cookies-from-browser`). Esses dados permanecem exclusivamente na sua máquina e nunca são enviados a terceiros.
+
 ## Licença
 
-Distribuído sob a licença [MIT](LICENSE).
+Distribuído sob a licença [MIT](LICENSE). Consulte [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) para informações sobre as licenças dos binários sidecar (`FFmpeg`, `FFprobe` e `yt-dlp`).
 
 ---
 
 ## English Overview
 
-**Conversor** is a local-first Windows desktop application built with **Tauri 2**, **React 19**, **TypeScript**, and **Rust** for video/audio/image compression and conversion via `FFmpeg`, plus media downloading via `yt-dlp` sidecars.
+**MediaKit** is a local-first Windows desktop application built with **Tauri 2**, **React 19**, **TypeScript**, and **Rust** for video/audio/image compression and conversion via `FFmpeg`, plus media downloading via `yt-dlp` sidecars.
 
 - **Local execution:** Everything runs offline on your machine; no uploads or external queues.
 - **Prerequisites:** Windows 10/11 (x64), Node.js 20+, Rust (`rustup`), Visual Studio C++ Build Tools, and WebView2.

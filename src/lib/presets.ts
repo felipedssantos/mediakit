@@ -14,6 +14,7 @@ export interface PresetDefinition {
   videoCodec: string | null;
   supportsVideo: boolean;
   usesGpu: boolean;
+  recommended?: boolean;
 }
 
 export const PRESETS: PresetDefinition[] = [
@@ -26,6 +27,7 @@ export const PRESETS: PresetDefinition[] = [
     videoCodec: "h264",
     supportsVideo: true,
     usesGpu: false,
+    recommended: true,
   },
   {
     id: "compress_quality",
@@ -37,7 +39,7 @@ export const PRESETS: PresetDefinition[] = [
     supportsVideo: true,
     usesGpu: false,
   },
-    {
+  {
     id: "convert_mp4",
     label: "Converter o vídeo",
     description: "Troca o tipo do arquivo: MP4, MKV, MOV, WebM ou AVI.",
@@ -46,6 +48,7 @@ export const PRESETS: PresetDefinition[] = [
     videoCodec: "h264",
     supportsVideo: true,
     usesGpu: false,
+    recommended: true,
   },
   {
     id: "extract_audio",
@@ -105,6 +108,7 @@ export const VIDEO_OUTPUT_FORMATS: {
   label: string;
   bestFor: string;
   usesGpu: boolean;
+  recommended?: boolean;
 }[] = [
   {
     id: "mp4",
@@ -112,6 +116,7 @@ export const VIDEO_OUTPUT_FORMATS: {
     label: "MP4",
     bestFor: "O mais compatível com celular, WhatsApp e players",
     usesGpu: false,
+    recommended: true,
   },
   {
     id: "mkv",

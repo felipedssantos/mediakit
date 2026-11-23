@@ -1,11 +1,18 @@
 import type { ReactNode } from "react";
 
-import { ptBR } from "../i18n/pt-BR";
+import { useT } from "../hooks/useLocale";
+import type { Translations } from "../i18n";
 import type { ImageFormat } from "../lib/imagePresets";
 import { FieldHint } from "./FieldHint";
+import { SelectField } from "./SelectField";
+import { AdvancedOptionsDisclosure } from "./settings/AdvancedOptionsDisclosure";
 import { ConcurrencySlider } from "./settings/ConcurrencySlider";
 import { OutputDirField } from "./settings/OutputDirField";
 import { QualitySlider } from "./settings/QualitySlider";
+import {
+  SimpleQualityPicker,
+  type QualityTier,
+} from "./settings/SimpleQualityPicker";
 
 interface ImageOutputSettingsProps {
   quality: number;
@@ -22,14 +29,40 @@ interface ImageOutputSettingsProps {
   children?: ReactNode;
 }
 
-function qualityLabel(quality: number): string {
-  if (quality >= 90) return ptBR.common.qualityHigh;
-  if (quality >= 75) return ptBR.common.qualityBalanced;
-  return ptBR.common.qualitySmaller;
+function getImageQualityTiers(t: Translations): QualityTier[] {
+  return [
+    {
+      id: "smaller",
+      label: t.qualitySimple.smaller,
+      hint: t.qualitySimple.smallerHint,
+      value: 65,
+    },
+    {
+      id: "balanced",
+      label: t.qualitySimple.balanced,
+      hint: t.qualitySimple.balancedHint,
+      value: 82,
+    },
+    {
+      id: "high",
+      label: t.qualitySimple.high,
+      hint: t.qualitySimple.highHint,
+      value: 93,
+    },
+  ];
 }
 
-const selectClass =
-  "ink mt-1 w-full border border-steel-dim bg-flap px-2 py-1.5 text-sm text-paint outline-none focus:border-lamp";
+function activeTierForImageQuality(quality: number): QualityTier["id"] {
+  if (quality >= 90) return "high";
+  if (quality >= 75) return "balanced";
+  return "smaller";
+}
+
+function qualityLabel(quality: number, t: Translations): string {
+  if (quality >= 90) return t.common.qualityHigh;
+  if (quality >= 75) return t.common.qualityBalanced;
+  return t.common.qualitySmaller;
+}
 
 export function ImageOutputSettings({
   quality,
@@ -45,25 +78,35 @@ export function ImageOutputSettings({
   onPickOutputDir,
   children,
 }: ImageOutputSettingsProps) {
+  const t = useT();
+
   const lossless =
     imageFormat === "png" || imageFormat === "bmp" || imageFormat === "tiff";
 
   return (
-    <div className="flex flex-col border border-rule">
-      <div className="px-3 py-2.5">
-        <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-          <OutputDirField
-            className="sm:col-span-2"
-            value={outputDir}
-            onPick={onPickOutputDir}
-          />
+    <div className="surface-card flex flex-col rounded-2xl">
+      <div className="flex flex-col gap-4 p-4">
+        <OutputDirField value={outputDir} onPick={onPickOutputDir} />
 
+        {!lossless ? (
+          <SimpleQualityPicker
+            tiers={getImageQualityTiers(t)}
+            activeId={activeTierForImageQuality(quality)}
+            onSelect={onQualityChange}
+          />
+        ) : (
+          <div className="rounded-xl border border-line bg-inset px-3.5 py-2.5">
+            <FieldHint>{t.outputSettings.losslessHint}</FieldHint>
+          </div>
+        )}
+
+        <AdvancedOptionsDisclosure>
           {!lossless && (
             <QualitySlider
               min={50}
               max={95}
               value={quality}
-              label={qualityLabel(quality)}
+              label={qualityLabel(quality, t)}
               onChange={onQualityChange}
             />
           )}
@@ -74,51 +117,33 @@ export function ImageOutputSettings({
             onChange={onConcurrencyChange}
           />
 
-          <div>
-            <label className="stamp block text-paint-dim">
-              {ptBR.outputSettings.maxSizeLabel}
-            </label>
-            <select
-              value={resolution}
-              onChange={(event) => onResolutionChange(event.target.value)}
-              className={selectClass}
-            >
-              <option value="original">
-                {ptBR.outputSettings.resOriginal}
-              </option>
-              <option value="1920">{ptBR.outputSettings.imgMax1920}</option>
-              <option value="1280">{ptBR.outputSettings.imgMax1280}</option>
-              <option value="800">{ptBR.outputSettings.imgMax800}</option>
-            </select>
-          </div>
+          <SelectField
+            label={t.outputSettings.maxSizeLabel}
+            value={resolution}
+            onChange={onResolutionChange}
+            options={[
+              { value: "original", label: t.outputSettings.resOriginal },
+              { value: "1920", label: t.outputSettings.imgMax1920 },
+              { value: "1280", label: t.outputSettings.imgMax1280 },
+              { value: "800", label: t.outputSettings.imgMax800 },
+            ]}
+          />
 
           {showFormat && (
-            <div>
-              <label className="stamp block text-paint-dim">
-                {ptBR.outputSettings.formatLabel}
-              </label>
-              <select
-                value={imageFormat}
-                onChange={(event) =>
-                  onFormatChange(event.target.value as ImageFormat)
-                }
-                className={selectClass}
-              >
-                <option value="jpeg">{ptBR.outputSettings.fmtJpeg}</option>
-                <option value="webp">{ptBR.outputSettings.fmtWebp}</option>
-                <option value="png">{ptBR.outputSettings.fmtPng}</option>
-                <option value="bmp">{ptBR.outputSettings.fmtBmp}</option>
-                <option value="tiff">{ptBR.outputSettings.fmtTiff}</option>
-              </select>
-            </div>
+            <SelectField<ImageFormat>
+              label={t.outputSettings.formatLabel}
+              value={imageFormat}
+              onChange={onFormatChange}
+              options={[
+                { value: "jpeg", label: t.outputSettings.fmtJpeg },
+                { value: "webp", label: t.outputSettings.fmtWebp },
+                { value: "png", label: t.outputSettings.fmtPng },
+                { value: "bmp", label: t.outputSettings.fmtBmp },
+                { value: "tiff", label: t.outputSettings.fmtTiff },
+              ]}
+            />
           )}
-
-          {lossless && (
-            <div className="sm:col-span-2">
-              <FieldHint>{ptBR.outputSettings.losslessHint}</FieldHint>
-            </div>
-          )}
-        </div>
+        </AdvancedOptionsDisclosure>
       </div>
       {children}
     </div>

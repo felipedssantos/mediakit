@@ -8,9 +8,7 @@ use crate::youtube::cookies::{self, CookieCache};
 
 /// Probes a media URL via `yt-dlp`, cycling through cached/installed browser cookies when needed.
 pub async fn probe_url(app: &AppHandle, url: &str) -> AppResult<YoutubeVideo> {
-    if url.trim().is_empty() {
-        return Err(AppError::validation("Cole um link de vídeo para continuar"));
-    }
+    let url = crate::youtube::validate_media_url(url)?;
 
     let cache = app.state::<CookieCache>();
     let mut last_detail = String::new();
@@ -47,6 +45,7 @@ async fn probe_once(
         args.push("--cookies-from-browser".into());
         args.push(name.to_string());
     }
+    args.push("--".into());
     args.push(url.to_string());
 
     let output = run_output(app, "yt-dlp", &args)

@@ -11,9 +11,9 @@ pub enum AppError {
     Validation(String),
     #[error("{0}")]
     NotFound(&'static str),
-    #[error("{name} sidecar indisponível: {detail}")]
+    #[error("{name} ausente ou bloqueado: {detail}. Use o auto-reparo ou configure o caminho nas Configurações.")]
     SidecarUnavailable { name: &'static str, detail: String },
-    #[error("Falha ao executar {name}: {detail}")]
+    #[error("Falha ao executar {name} (pode estar bloqueado pelo antivírus): {detail}")]
     SidecarExec { name: &'static str, detail: String },
     #[error("{0}")]
     Io(#[from] std::io::Error),

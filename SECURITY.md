@@ -11,7 +11,7 @@
 Please **do not** report security vulnerabilities through public GitHub issues.
 
 Instead, open a private security advisory on GitHub:
-https://github.com/felipedssantos/conversor/security/advisories/new
+https://github.com/felipedssantos/mediakit/security/advisories/new
 
 Include as much detail as possible:
 

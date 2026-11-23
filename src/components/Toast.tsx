@@ -1,5 +1,5 @@
+import { CheckCircle2 } from "lucide-react";
 import { useEffect } from "react";
-import { Check } from "lucide-react";
 
 import { useToast } from "../hooks/useToast";
 
@@ -18,11 +18,11 @@ export function Toast() {
   return (
     <div
       role="status"
-      className="board-toast pointer-events-none absolute bottom-5 left-1/2 z-50 -translate-x-1/2 border border-cleared bg-void px-3.5 py-2.5 shadow-none"
+      className="ui-toast pointer-events-none absolute bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-full border border-ok/30 bg-surface px-4 py-2 shadow-lg"
     >
-      <p className="flex items-center gap-2 text-sm text-cleared">
-        <Check size={14} />
-        <span className="stamp text-cleared">{message}</span>
+      <p className="flex items-center gap-2 text-xs font-semibold text-ok">
+        <CheckCircle2 size={15} />
+        <span>{message}</span>
       </p>
     </div>
   );

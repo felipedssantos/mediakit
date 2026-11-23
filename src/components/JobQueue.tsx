@@ -1,4 +1,4 @@
-import { ptBR } from "../i18n/pt-BR";
+import { useT } from "../hooks/useLocale";
 import type { Job } from "../types/job";
 import { JobCard } from "./JobCard";
 import { JobQueueList } from "./JobQueueList";
@@ -16,13 +16,14 @@ export function JobQueue({
   onCancel,
   onRetry,
   fill,
-  emptyDetail = ptBR.converter.queueConvertEmpty,
+  emptyDetail,
 }: JobQueueProps) {
+  const t = useT();
   return (
     <JobQueueList
       jobs={jobs}
       fill={fill}
-      emptyDetail={emptyDetail}
+      emptyDetail={emptyDetail ?? t.converter.queueConvertEmpty}
       renderItem={(job, line) => (
         <JobCard
           key={job.id}

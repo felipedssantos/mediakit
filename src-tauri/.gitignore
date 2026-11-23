@@ -8,3 +8,8 @@
 
 # FFmpeg / yt-dlp sidecars
 /binaries/*.exe
+
+# Signing keys and local environment files
+*.pfx
+*.key
+.env

@@ -68,7 +68,7 @@ fn point_in_monitor(px: i32, py: i32, x: i32, y: i32, width: u32, height: u32) -
 
 fn create_overlay_window(app: &AppHandle, label: &str) -> AppResult<WebviewWindow> {
     WebviewWindowBuilder::new(app, label, WebviewUrl::App("index.html?snip=1".into()))
-        .initialization_script("window.__CONVERSOR_SNIP__ = true;")
+        .initialization_script("window.__MEDIAKIT_SNIP__ = true;")
         .title("Selecionar área")
         .decorations(false)
         .transparent(false)

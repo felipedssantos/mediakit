@@ -1,8 +1,8 @@
 import { FolderOpen, RotateCcw, X } from "lucide-react";
 
-import { ptBR } from "../i18n/pt-BR";
+import { useT } from "../hooks/useLocale";
 import { revealPath } from "../lib/api/files";
-import { BOARD_STATUS } from "../lib/boardStatus";
+import { getBoardStatus } from "../lib/boardStatus";
 import type { JobStatus } from "../types/job";
 import { JobRow, RowAction } from "./JobRow";
 
@@ -35,6 +35,7 @@ export function JobCardBase({
   onCancel,
   onRetry,
 }: JobCardBaseProps) {
+  const t = useT();
   const canCancel =
     jobStatus === "queued" ||
     jobStatus === "running" ||
@@ -46,7 +47,7 @@ export function JobCardBase({
       line={line}
       title={title}
       detail={detail}
-      status={BOARD_STATUS[jobStatus]}
+      status={getBoardStatus(jobStatus, t)}
       statusLabel={statusLabel}
       progress={progress}
       speed={speed}
@@ -56,19 +57,19 @@ export function JobCardBase({
           {canCancel && (
             <RowAction danger onClick={() => onCancel(id)}>
               <X size={12} />
-              {ptBR.common.cancel}
+              {t.common.cancel}
             </RowAction>
           )}
           {canRetry && (
             <RowAction onClick={() => onRetry(id)}>
               <RotateCcw size={12} />
-              {ptBR.common.retry}
+              {t.common.retry}
             </RowAction>
           )}
           {jobStatus === "completed" && (
             <RowAction onClick={() => void revealPath(revealTarget)}>
               <FolderOpen size={12} />
-              {ptBR.common.openFolder}
+              {t.common.openFolder}
             </RowAction>
           )}
         </>

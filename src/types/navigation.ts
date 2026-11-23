@@ -5,4 +5,5 @@ export type AppScreen =
   | "image_compress"
   | "image_convert"
   | "youtube"
-  | "screenshot";
+  | "screenshot"
+  | "settings";

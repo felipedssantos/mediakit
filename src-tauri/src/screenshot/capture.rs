@@ -26,7 +26,7 @@ pub struct MonitorShot {
 }
 
 pub fn temp_png_path() -> AppResult<PathBuf> {
-    let dir = std::env::temp_dir().join("conversor-screenshots");
+    let dir = std::env::temp_dir().join("mediakit-screenshots");
     fs::create_dir_all(&dir)?;
     Ok(dir.join(format!("{}.webp", Uuid::new_v4())))
 }

@@ -1,4 +1,4 @@
-import { ptBR } from "../i18n/pt-BR";
+import type { Translations } from "../i18n";
 import type { Job } from "../types/job";
 
 export type BoardTone = "idle" | "running" | "cleared" | "fault";
@@ -8,26 +8,43 @@ export interface BoardStatus {
   tone: BoardTone;
 }
 
-/** Vocabulário do painel: cada estado é uma palavra estampada, não uma cor. */
-export const BOARD_STATUS: Record<Job["status"], BoardStatus> = {
-  queued: { label: ptBR.boardStatus.queued, tone: "idle" },
-  running: { label: ptBR.boardStatus.running, tone: "running" },
-  finalizing: { label: ptBR.boardStatus.finalizing, tone: "running" },
-  completed: { label: ptBR.boardStatus.completed, tone: "cleared" },
-  failed: { label: ptBR.boardStatus.failed, tone: "fault" },
-  cancelled: { label: ptBR.boardStatus.cancelled, tone: "idle" },
-};
+export function getBoardStatus(
+  status: Job["status"],
+  t: Translations,
+): BoardStatus {
+  switch (status) {
+    case "queued":
+      return { label: t.boardStatus.queued, tone: "idle" };
+    case "running":
+      return { label: t.boardStatus.running, tone: "running" };
+    case "finalizing":
+      return { label: t.boardStatus.finalizing, tone: "running" };
+    case "completed":
+      return { label: t.boardStatus.completed, tone: "cleared" };
+    case "failed":
+      return { label: t.boardStatus.failed, tone: "fault" };
+    case "cancelled":
+      return { label: t.boardStatus.cancelled, tone: "idle" };
+  }
+}
 
 export const TONE_TEXT: Record<BoardTone, string> = {
-  idle: "text-paint-faint",
-  running: "text-lamp",
-  cleared: "text-cleared",
-  fault: "text-fault",
+  idle: "text-ink-3",
+  running: "text-accent",
+  cleared: "text-ok",
+  fault: "text-danger",
+};
+
+export const TONE_BADGE: Record<BoardTone, string> = {
+  idle: "bg-elevated text-ink-2 border-line",
+  running: "bg-accent-soft text-accent border-accent/25",
+  cleared: "bg-ok-soft text-ok border-ok/25",
+  fault: "bg-danger-soft text-danger border-danger/25",
 };
 
 export const TONE_EDGE: Record<BoardTone, string> = {
-  idle: "bg-steel-dim",
-  running: "bg-lamp",
-  cleared: "bg-cleared",
-  fault: "bg-fault",
+  idle: "bg-ink-3",
+  running: "bg-accent",
+  cleared: "bg-ok",
+  fault: "bg-danger",
 };
