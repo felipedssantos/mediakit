@@ -5,6 +5,7 @@ use crate::presets::image::{append_image, image_format_from, is_image_preset};
 use crate::presets::video::{append_compress, append_convert_video, append_extract_audio};
 use crate::types::{EncodeOptions, MediaInfo};
 
+/// Resolves the output file extension for a given preset and optional container/format override.
 pub fn output_extension(preset_id: &str, format: Option<&str>) -> &'static str {
     if is_image_preset(preset_id) {
         return match image_format_from(preset_id, format) {
@@ -35,6 +36,7 @@ pub fn output_extension(preset_id: &str, format: Option<&str>) -> &'static str {
     }
 }
 
+/// Builds the full FFmpeg CLI argument list for a video, audio, or image conversion job.
 pub fn build_args(
     input: &str,
     output: &str,
@@ -72,6 +74,7 @@ pub fn build_args(
     Ok(args)
 }
 
+/// Suggests a default output path using the input stem, preset ID, and target directory.
 pub fn default_output_path(
     input: &str,
     preset_id: &str,

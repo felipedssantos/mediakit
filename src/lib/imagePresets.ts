@@ -119,11 +119,13 @@ export function isImageConvertPreset(id: string): boolean {
   return (IMAGE_CONVERT_PRESET_IDS as readonly string[]).includes(id);
 }
 
+/** Returns `true` when `path` has a supported image file extension. */
 export function isImagePath(path: string): boolean {
   const ext = path.split(/[/\\]/).pop()?.split(".").pop()?.toLowerCase();
   return Boolean(ext && IMAGE_EXTENSIONS.includes(ext));
 }
 
+/** Looks up an image preset definition by its identifier. */
 export function imagePresetById(id: string): ImagePresetDefinition | undefined {
   return IMAGE_PRESETS.find((item) => item.id === id);
 }
@@ -180,6 +182,7 @@ export const IMAGE_OUTPUT_CODES: Record<ImageFormat, string> = {
   tiff: "TF",
 };
 
+/** Maps an output image format to its corresponding conversion preset ID. */
 export function presetIdForImageFormat(format: ImageFormat): ImagePresetId {
   switch (format) {
     case "png":

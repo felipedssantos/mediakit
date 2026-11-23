@@ -1,3 +1,4 @@
+/** Splits newline-separated input into unique, non-empty media URLs. */
 export function parseYoutubeUrls(raw: string): string[] {
   const seen = new Set<string>();
   const urls: string[] = [];

@@ -1,3 +1,4 @@
+/** Builds a timestamped default filename (`print-YYYYMMDD-HHMMSS.png`) for saved captures. */
 export function printFileName(): string {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");

@@ -13,6 +13,7 @@ use crate::types::{JobStatus, YoutubeDownloadJob};
 use crate::youtube::cookies::CookieCache;
 use crate::youtube::probe::humanize_ytdlp_error;
 
+/// Executes a `yt-dlp` download job, streaming progress, post-processing state, and cancellation.
 pub async fn run_download(
     app: AppHandle,
     queue: Arc<JobQueue<YoutubeDownloadJob>>,

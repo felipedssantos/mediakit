@@ -217,10 +217,12 @@ export const VIDEO_EXTENSIONS = [
   "ts",
 ];
 
+/** Extracts the filename from a Windows or POSIX file path. */
 export function fileNameFromPath(path: string): string {
   return path.split(/[/\\]/).pop() ?? path;
 }
 
+/** Formats a byte count into a human-readable string (e.g., `1.5 MB`). */
 export function formatBytes(bytes: number): string {
   if (bytes <= 0) return "0 B";
   const units = ["B", "KB", "MB", "GB", "TB"];
@@ -231,6 +233,7 @@ export function formatBytes(bytes: number): string {
   return `${(bytes / 1024 ** index).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
 }
 
+/** Formats seconds into `m:ss` or `h:mm:ss` (`—` when zero or non-finite). */
 export function formatDuration(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds <= 0) return "—";
   const total = Math.round(seconds);

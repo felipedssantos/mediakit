@@ -10,6 +10,7 @@ use crate::queue::JobQueue;
 use crate::sidecar::{run_output, spawn_sidecar, stream_lines, StreamSource};
 use crate::types::{Job, JobStatus};
 
+/// Executes an FFmpeg conversion job, streaming progress and handling cancellation.
 pub async fn run_job(app: AppHandle, queue: Arc<JobQueue<Job>>, mut job: Job) {
     if queue.is_cancelled(&job.id) {
         queue.finish_job(&job.id, JobStatus::Cancelled, None);
@@ -102,6 +103,7 @@ pub async fn run_job(app: AppHandle, queue: Arc<JobQueue<Job>>, mut job: Job) {
     }
 }
 
+/// Detects whether the bundled FFmpeg binary supports NVIDIA NVENC encoders.
 pub async fn detect_nvenc(app: &AppHandle) -> AppResult<bool> {
     let args = vec!["-hide_banner".into(), "-encoders".into()];
     let output = run_output(app, "ffmpeg", &args).await?;

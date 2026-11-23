@@ -6,6 +6,7 @@ use crate::sidecar::run_output;
 use crate::types::YoutubeVideo;
 use crate::youtube::cookies::{self, CookieCache};
 
+/// Probes a media URL via `yt-dlp`, cycling through cached/installed browser cookies when needed.
 pub async fn probe_url(app: &AppHandle, url: &str) -> AppResult<YoutubeVideo> {
     if url.trim().is_empty() {
         return Err(AppError::validation("Cole um link de vídeo para continuar"));

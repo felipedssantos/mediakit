@@ -4,6 +4,7 @@ import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { IMAGE_EXTENSIONS } from "../imagePresets";
 import { VIDEO_EXTENSIONS } from "../presets";
 
+/** Opens a multi-select file dialog filtered to supported video extensions. */
 export async function pickVideoFiles(): Promise<string[]> {
   const selected = await open({
     multiple: true,
@@ -14,6 +15,7 @@ export async function pickVideoFiles(): Promise<string[]> {
   return Array.isArray(selected) ? selected : [selected];
 }
 
+/** Opens a multi-select file dialog filtered to supported image extensions. */
 export async function pickImageFiles(): Promise<string[]> {
   const selected = await open({
     multiple: true,
@@ -24,6 +26,7 @@ export async function pickImageFiles(): Promise<string[]> {
   return Array.isArray(selected) ? selected : [selected];
 }
 
+/** Opens a folder picker dialog and returns the selected directory path, if any. */
 export async function pickOutputDirectory(): Promise<string | null> {
   const selected = await open({
     directory: true,
@@ -33,6 +36,7 @@ export async function pickOutputDirectory(): Promise<string | null> {
   return selected;
 }
 
+/** Reveals a file or its parent directory in Windows Explorer. */
 export async function revealPath(path: string): Promise<void> {
   const target = path.trim();
   if (!target) return;

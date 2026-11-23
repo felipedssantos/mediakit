@@ -5,6 +5,7 @@ use crate::error::{AppError, AppResult};
 use crate::sidecar::run_output;
 use crate::types::{MediaInfo, StreamInfo};
 
+/// Runs the `ffprobe` sidecar on `path` and parses container and stream metadata.
 pub async fn probe_media(app: &AppHandle, path: &str) -> AppResult<MediaInfo> {
     let args = vec![
         "-v".into(),
