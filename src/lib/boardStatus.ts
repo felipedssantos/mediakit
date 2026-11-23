@@ -11,6 +11,7 @@ export interface BoardStatus {
 export const BOARD_STATUS: Record<Job["status"], BoardStatus> = {
   queued: { label: "Na fila", tone: "idle" },
   running: { label: "Em andamento", tone: "running" },
+  finalizing: { label: "Juntando", tone: "running" },
   completed: { label: "Concluído", tone: "cleared" },
   failed: { label: "Falhou", tone: "fault" },
   cancelled: { label: "Cancelado", tone: "idle" },

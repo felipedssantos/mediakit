@@ -1,5 +1,6 @@
 use std::path::PathBuf;
-use std::sync::Mutex;
+
+use parking_lot::Mutex;
 
 type BrowserProbe = (&'static str, fn() -> Option<PathBuf>);
 
@@ -16,41 +17,52 @@ const CANDIDATES: &[BrowserProbe] = &[
     ("whale", whale_dir),
 ];
 
-static LAST_SUCCESS: Mutex<Option<Option<String>>> = Mutex::new(None);
-
-pub fn remember(browser: Option<String>) {
-    *LAST_SUCCESS.lock().unwrap() = Some(browser);
+/// Managed Tauri state caching the last browser profile that succeeded for yt-dlp cookies.
+pub struct CookieCache {
+    last_success: Mutex<Option<Option<String>>>,
 }
 
-pub fn preferred() -> Option<String> {
-    match LAST_SUCCESS.lock().unwrap().clone() {
-        Some(inner) => inner,
-        None => installed_browsers().into_iter().next(),
-    }
-}
-
-/// Ordem: último navegador que funcionou, depois os instalados, por fim sem cookies.
-pub fn attempts() -> Vec<Option<String>> {
-    let installed = installed_browsers();
-    let mut out: Vec<Option<String>> = Vec::new();
-
-    if let Some(Some(browser)) = LAST_SUCCESS.lock().unwrap().clone() {
-        out.push(Some(browser));
-    }
-
-    for name in installed {
-        if !out
-            .iter()
-            .any(|item| item.as_deref() == Some(name.as_str()))
-        {
-            out.push(Some(name));
+impl CookieCache {
+    pub fn new() -> Self {
+        Self {
+            last_success: Mutex::new(None),
         }
     }
 
-    if !out.iter().any(Option::is_none) {
-        out.push(None);
+    pub fn remember(&self, browser: Option<String>) {
+        *self.last_success.lock() = Some(browser);
     }
-    out
+
+    pub fn preferred(&self) -> Option<String> {
+        match self.last_success.lock().clone() {
+            Some(inner) => inner,
+            None => installed_browsers().into_iter().next(),
+        }
+    }
+
+    /// Ordem: último navegador que funcionou, depois os instalados, por fim sem cookies.
+    pub fn attempts(&self) -> Vec<Option<String>> {
+        let installed = installed_browsers();
+        let mut out: Vec<Option<String>> = Vec::new();
+
+        if let Some(Some(browser)) = self.last_success.lock().clone() {
+            out.push(Some(browser));
+        }
+
+        for name in installed {
+            if !out
+                .iter()
+                .any(|item| item.as_deref() == Some(name.as_str()))
+            {
+                out.push(Some(name));
+            }
+        }
+
+        if !out.iter().any(Option::is_none) {
+            out.push(None);
+        }
+        out
+    }
 }
 
 pub fn installed_browsers() -> Vec<String> {

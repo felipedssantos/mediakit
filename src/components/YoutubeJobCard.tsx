@@ -18,17 +18,16 @@ export function YoutubeJobCard({
   onCancel,
   onRetry,
 }: YoutubeJobCardProps) {
-  const canCancel = job.status === "queued" || job.status === "running";
+  const canCancel =
+    job.status === "queued" ||
+    job.status === "running" ||
+    job.status === "finalizing";
   const canRetry = job.status === "failed" || job.status === "cancelled";
   const openPath = job.output_path ?? job.output_dir;
   const status = BOARD_STATUS[job.status];
 
-  const finalizing = job.status === "running" && job.speed === "finalizando";
-  const statusLabel = finalizing
-    ? "Juntando"
-    : job.status === "running"
-      ? "Baixando"
-      : status.label;
+  const statusLabel =
+    job.status === "running" ? "Baixando" : status.label;
 
   const detail =
     job.options.mode === "audio"
@@ -44,11 +43,11 @@ export function YoutubeJobCard({
       statusLabel={statusLabel}
       progress={job.progress}
       speed={
-        job.status === "running"
-          ? job.speed === "finalizando"
-            ? "juntando arquivo"
-            : job.speed
-          : null
+        job.status === "finalizing"
+          ? "juntando arquivo"
+          : job.status === "running"
+            ? job.speed
+            : null
       }
       error={job.error}
       actions={

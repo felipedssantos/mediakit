@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 pub enum JobStatus {
     Queued,
     Running,
+    Finalizing,
     Completed,
     Failed,
     Cancelled,

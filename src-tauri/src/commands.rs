@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use tauri::{AppHandle, Manager, State};
 
+use crate::error::{AppError, AppResult};
 use crate::manager::JobManager;
 use crate::presets::default_output_path;
 use crate::probe as media_probe;
@@ -14,7 +15,7 @@ use crate::youtube::probe as youtube_probe;
 use crate::youtube::YoutubeManager;
 
 #[tauri::command]
-pub async fn probe_media(app: AppHandle, path: String) -> Result<MediaInfo, String> {
+pub async fn probe_media(app: AppHandle, path: String) -> AppResult<MediaInfo> {
     media_probe::probe_media(&app, &path).await
 }
 
@@ -25,7 +26,7 @@ pub async fn add_job(
     output_path: Option<String>,
     output_dir: Option<String>,
     options: EncodeOptions,
-) -> Result<Job, String> {
+) -> AppResult<Job> {
     let output = output_path.unwrap_or_else(|| {
         default_output_path(
             &input_path,
@@ -44,29 +45,29 @@ pub async fn add_job(
     }])?;
     jobs.into_iter()
         .next()
-        .ok_or_else(|| "Falha ao criar job".into())
+        .ok_or_else(|| AppError::message("Falha ao criar job"))
 }
 
 #[tauri::command]
 pub async fn add_jobs(
     manager: State<'_, Arc<JobManager>>,
     items: Vec<AddJobRequest>,
-) -> Result<Vec<Job>, String> {
+) -> AppResult<Vec<Job>> {
     manager.add_jobs(items)
 }
 
 #[tauri::command]
-pub async fn cancel_job(manager: State<'_, Arc<JobManager>>, id: String) -> Result<Job, String> {
+pub async fn cancel_job(manager: State<'_, Arc<JobManager>>, id: String) -> AppResult<Job> {
     manager.cancel_job(&id)
 }
 
 #[tauri::command]
-pub async fn retry_job(manager: State<'_, Arc<JobManager>>, id: String) -> Result<Job, String> {
+pub async fn retry_job(manager: State<'_, Arc<JobManager>>, id: String) -> AppResult<Job> {
     manager.retry_job(&id)
 }
 
 #[tauri::command]
-pub async fn get_jobs(manager: State<'_, Arc<JobManager>>) -> Result<Vec<Job>, String> {
+pub async fn get_jobs(manager: State<'_, Arc<JobManager>>) -> AppResult<Vec<Job>> {
     Ok(manager.list_jobs())
 }
 
@@ -74,18 +75,18 @@ pub async fn get_jobs(manager: State<'_, Arc<JobManager>>) -> Result<Vec<Job>, S
 pub async fn set_max_concurrency(
     manager: State<'_, Arc<JobManager>>,
     value: u32,
-) -> Result<u32, String> {
+) -> AppResult<u32> {
     manager.set_max_concurrency(value as usize);
     Ok(manager.max_concurrency() as u32)
 }
 
 #[tauri::command]
-pub async fn get_max_concurrency(manager: State<'_, Arc<JobManager>>) -> Result<u32, String> {
+pub async fn get_max_concurrency(manager: State<'_, Arc<JobManager>>) -> AppResult<u32> {
     Ok(manager.max_concurrency() as u32)
 }
 
 #[tauri::command]
-pub async fn detect_hw(app: AppHandle) -> Result<HwCapabilities, String> {
+pub async fn detect_hw(app: AppHandle) -> AppResult<HwCapabilities> {
     Ok(HwCapabilities {
         nvenc: detect_nvenc(&app).await.unwrap_or(false),
     })
@@ -97,7 +98,7 @@ pub async fn suggest_output_path(
     preset_id: String,
     output_dir: Option<String>,
     image_format: Option<String>,
-) -> Result<String, String> {
+) -> AppResult<String> {
     Ok(default_output_path(
         &input_path,
         &preset_id,
@@ -107,7 +108,7 @@ pub async fn suggest_output_path(
 }
 
 #[tauri::command]
-pub async fn probe_youtube(app: AppHandle, url: String) -> Result<YoutubeVideo, String> {
+pub async fn probe_youtube(app: AppHandle, url: String) -> AppResult<YoutubeVideo> {
     youtube_probe::probe_url(&app, &url).await
 }
 
@@ -118,9 +119,10 @@ pub async fn add_youtube_download(
     title: String,
     output_dir: String,
     options: YoutubeDownloadOptions,
-) -> Result<YoutubeDownloadJob, String> {
-    std::fs::create_dir_all(&output_dir)
-        .map_err(|e| format!("Não foi possível criar a pasta de destino: {e}"))?;
+) -> AppResult<YoutubeDownloadJob> {
+    std::fs::create_dir_all(&output_dir).map_err(|e| {
+        AppError::message(format!("Não foi possível criar a pasta de destino: {e}"))
+    })?;
     manager.add_job(AddYoutubeDownloadRequest {
         url,
         title,
@@ -133,7 +135,7 @@ pub async fn add_youtube_download(
 pub async fn cancel_youtube_download(
     manager: State<'_, Arc<YoutubeManager>>,
     id: String,
-) -> Result<YoutubeDownloadJob, String> {
+) -> AppResult<YoutubeDownloadJob> {
     manager.cancel_job(&id)
 }
 
@@ -141,21 +143,21 @@ pub async fn cancel_youtube_download(
 pub async fn retry_youtube_download(
     manager: State<'_, Arc<YoutubeManager>>,
     id: String,
-) -> Result<YoutubeDownloadJob, String> {
+) -> AppResult<YoutubeDownloadJob> {
     manager.retry_job(&id)
 }
 
 #[tauri::command]
 pub async fn get_youtube_downloads(
     manager: State<'_, Arc<YoutubeManager>>,
-) -> Result<Vec<YoutubeDownloadJob>, String> {
+) -> AppResult<Vec<YoutubeDownloadJob>> {
     Ok(manager.list_jobs())
 }
 
 #[tauri::command]
-pub async fn default_download_dir(app: AppHandle) -> Result<String, String> {
+pub async fn default_download_dir(app: AppHandle) -> AppResult<String> {
     app.path()
         .video_dir()
         .map(|path| path.to_string_lossy().into_owned())
-        .map_err(|e| format!("Pasta de vídeos não encontrada: {e}"))
+        .map_err(|e| AppError::message(format!("Pasta de vídeos não encontrada: {e}")))
 }

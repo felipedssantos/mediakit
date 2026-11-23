@@ -1,10 +1,14 @@
 mod commands;
 mod desktop;
+mod error;
 mod features;
 mod manager;
 mod presets;
 mod probe;
+mod progress;
+mod queue;
 mod screenshot;
+mod sidecar;
 mod types;
 mod worker;
 mod youtube;
@@ -53,6 +57,7 @@ pub fn run() {
             app.manage(AppLifecycle::new());
             app.manage(JobManager::new(handle.clone()));
             app.manage(YoutubeManager::new(handle));
+            app.manage(youtube::cookies::CookieCache::new());
             app.manage(ScreenshotState::new());
 
             if features::SCREENSHOT_ENABLED {
@@ -117,21 +122,21 @@ pub fn run() {
             commands::retry_youtube_download,
             commands::get_youtube_downloads,
             commands::default_download_dir,
-            screenshot::list_screenshot_monitors,
-            screenshot::list_screenshot_windows,
-            screenshot::capture_monitor,
-            screenshot::capture_window,
-            screenshot::begin_region_capture,
-            screenshot::get_region_session,
-            screenshot::commit_snip_capture,
-            screenshot::crop_screenshot,
-            screenshot::finish_fullscreen_capture,
-            screenshot::cancel_region_capture,
-            screenshot::copy_screenshot,
-            screenshot::save_screenshot,
-            screenshot::default_picture_dir,
-            screenshot::list_screenshot_history,
-            screenshot::delete_screenshot_history,
+            screenshot::commands::list_screenshot_monitors,
+            screenshot::commands::list_screenshot_windows,
+            screenshot::commands::capture_monitor,
+            screenshot::commands::capture_window,
+            screenshot::commands::begin_region_capture,
+            screenshot::commands::get_region_session,
+            screenshot::commands::commit_snip_capture,
+            screenshot::commands::crop_screenshot,
+            screenshot::commands::finish_fullscreen_capture,
+            screenshot::commands::cancel_region_capture,
+            screenshot::commands::copy_screenshot,
+            screenshot::commands::save_screenshot,
+            screenshot::commands::default_picture_dir,
+            screenshot::commands::list_screenshot_history,
+            screenshot::commands::delete_screenshot_history,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

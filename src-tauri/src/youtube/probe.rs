@@ -1,32 +1,34 @@
 use serde_json::Value;
-use tauri::AppHandle;
-use tauri_plugin_shell::ShellExt;
+use tauri::{AppHandle, Manager};
 
+use crate::error::{AppError, AppResult};
+use crate::sidecar::run_output;
 use crate::types::YoutubeVideo;
-use crate::youtube::cookies;
+use crate::youtube::cookies::{self, CookieCache};
 
-pub async fn probe_url(app: &AppHandle, url: &str) -> Result<YoutubeVideo, String> {
+pub async fn probe_url(app: &AppHandle, url: &str) -> AppResult<YoutubeVideo> {
     if url.trim().is_empty() {
-        return Err("Cole um link de vídeo para continuar".into());
+        return Err(AppError::validation("Cole um link de vídeo para continuar"));
     }
 
+    let cache = app.state::<CookieCache>();
     let mut last_detail = String::new();
-    for browser in cookies::attempts() {
+    for browser in cache.attempts() {
         match probe_once(app, url, browser.as_deref()).await {
             Ok(video) => {
-                cookies::remember(browser);
+                cache.remember(browser);
                 return Ok(video);
             }
             Err(detail) => {
                 last_detail = detail;
                 if !cookies::should_try_next_browser(&last_detail) {
-                    return Err(humanize_ytdlp_error(&last_detail));
+                    return Err(AppError::message(humanize_ytdlp_error(&last_detail)));
                 }
             }
         }
     }
 
-    Err(humanize_ytdlp_error(&last_detail))
+    Err(AppError::message(humanize_ytdlp_error(&last_detail)))
 }
 
 async fn probe_once(
@@ -34,11 +36,6 @@ async fn probe_once(
     url: &str,
     browser: Option<&str>,
 ) -> Result<YoutubeVideo, String> {
-    let sidecar = app
-        .shell()
-        .sidecar("yt-dlp")
-        .map_err(|e| format!("yt-dlp sidecar indisponível: {e}"))?;
-
     let mut args = vec![
         "-J".into(),
         "--no-warnings".into(),
@@ -51,11 +48,9 @@ async fn probe_once(
     }
     args.push(url.to_string());
 
-    let output = sidecar
-        .args(args)
-        .output()
+    let output = run_output(app, "yt-dlp", &args)
         .await
-        .map_err(|e| format!("Falha ao consultar o vídeo: {e}"))?;
+        .map_err(|e| e.to_string())?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -71,12 +66,14 @@ async fn probe_once(
     let json: Value = serde_json::from_slice(&output.stdout)
         .map_err(|e| format!("Resposta inválida do yt-dlp: {e}"))?;
 
-    parse_video(json)
+    parse_video(json).map_err(|e| e.to_string())
 }
 
-fn parse_video(json: Value) -> Result<YoutubeVideo, String> {
+pub fn parse_video(json: Value) -> AppResult<YoutubeVideo> {
     if json.get("_type").and_then(Value::as_str) == Some("playlist") {
-        return Err("Este link é uma playlist. Abra um vídeo específico para baixar.".into());
+        return Err(AppError::validation(
+            "Este link é uma playlist. Abra um vídeo específico para baixar.",
+        ));
     }
 
     let id = json
@@ -171,5 +168,44 @@ pub fn humanize_ytdlp_error(detail: &str) -> String {
             .find(|line| !line.trim().is_empty())
             .unwrap_or(detail);
         format!("Não foi possível ler este vídeo: {}", first.trim())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::{humanize_ytdlp_error, parse_video};
+
+    #[test]
+    fn rejects_playlist_payload() {
+        let err = parse_video(json!({ "_type": "playlist" })).unwrap_err();
+        assert!(err.to_string().contains("playlist"));
+    }
+
+    #[test]
+    fn parses_video_with_fallback_thumbnail_and_source() {
+        let video = parse_video(json!({
+            "id": "abc",
+            "title": "Demo",
+            "uploader": "UploaderName",
+            "duration": 42.0,
+            "thumbnails": [{"url": "https://img/1.jpg"}, {"url": "https://img/2.jpg"}],
+            "original_url": "https://youtu.be/abc",
+            "extractor_key": "YoutubeIE"
+        }))
+        .unwrap();
+
+        assert_eq!(video.channel, "UploaderName");
+        assert_eq!(video.thumbnail.as_deref(), Some("https://img/2.jpg"));
+        assert_eq!(video.source.as_deref(), Some("Youtube"));
+    }
+
+    #[test]
+    fn humanizes_common_ytdlp_errors() {
+        assert!(
+            humanize_ytdlp_error("ERROR: Sign in to confirm you're not a bot").contains("login")
+        );
+        assert!(humanize_ytdlp_error("ERROR: Video unavailable").contains("não está disponível"));
     }
 }

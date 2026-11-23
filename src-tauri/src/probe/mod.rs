@@ -1,41 +1,36 @@
 use serde_json::Value;
 use tauri::AppHandle;
-use tauri_plugin_shell::ShellExt;
 
+use crate::error::{AppError, AppResult};
+use crate::sidecar::run_output;
 use crate::types::{MediaInfo, StreamInfo};
 
-pub async fn probe_media(app: &AppHandle, path: &str) -> Result<MediaInfo, String> {
-    let sidecar = app
-        .shell()
-        .sidecar("ffprobe")
-        .map_err(|e| format!("FFprobe sidecar indisponível: {e}"))?;
-
-    let output = sidecar
-        .args([
-            "-v",
-            "quiet",
-            "-print_format",
-            "json",
-            "-show_format",
-            "-show_streams",
-            path,
-        ])
-        .output()
-        .await
-        .map_err(|e| format!("Falha ao executar FFprobe: {e}"))?;
+pub async fn probe_media(app: &AppHandle, path: &str) -> AppResult<MediaInfo> {
+    let args = vec![
+        "-v".into(),
+        "quiet".into(),
+        "-print_format".into(),
+        "json".into(),
+        "-show_format".into(),
+        "-show_streams".into(),
+        path.into(),
+    ];
+    let output = run_output(app, "ffprobe", &args).await?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("Arquivo inválido ou corrompido: {stderr}"));
+        return Err(AppError::message(format!(
+            "Arquivo inválido ou corrompido: {stderr}"
+        )));
     }
 
     let json: Value = serde_json::from_slice(&output.stdout)
-        .map_err(|e| format!("JSON inválido do FFprobe: {e}"))?;
+        .map_err(|e| AppError::message(format!("JSON inválido do FFprobe: {e}")))?;
 
-    parse_probe_json(path, json)
+    Ok(parse_probe_json(path, json))
 }
 
-fn parse_probe_json(path: &str, json: Value) -> Result<MediaInfo, String> {
+pub fn parse_probe_json(path: &str, json: Value) -> MediaInfo {
     let format = json.get("format").cloned().unwrap_or(Value::Null);
     let duration = format.get("duration").and_then(value_as_f64).unwrap_or(0.0);
     let size = format.get("size").and_then(value_as_u64).unwrap_or(0);
@@ -61,7 +56,7 @@ fn parse_probe_json(path: &str, json: Value) -> Result<MediaInfo, String> {
         .find(|s| s.get("codec_type").and_then(Value::as_str) == Some("audio"))
         .map(parse_stream);
 
-    Ok(MediaInfo {
+    MediaInfo {
         path: path.to_string(),
         duration,
         size,
@@ -69,7 +64,7 @@ fn parse_probe_json(path: &str, json: Value) -> Result<MediaInfo, String> {
         bit_rate,
         video,
         audio,
-    })
+    }
 }
 
 fn parse_stream(value: &Value) -> StreamInfo {
@@ -117,4 +112,58 @@ fn value_as_u64(value: &Value) -> Option<u64> {
     value
         .as_u64()
         .or_else(|| value.as_str().and_then(|s| s.parse().ok()))
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::{parse_frame_rate, parse_probe_json};
+
+    #[test]
+    fn parses_video_and_audio_streams_from_ffprobe_json() {
+        let raw = json!({
+            "format": {
+                "duration": "125.5",
+                "size": "1048576",
+                "bit_rate": "668000",
+                "format_name": "mov,mp4,m4a"
+            },
+            "streams": [
+                {
+                    "codec_type": "video",
+                    "codec_name": "h264",
+                    "width": 1920,
+                    "height": 1080,
+                    "r_frame_rate": "30000/1001",
+                    "bit_rate": "500000"
+                },
+                {
+                    "codec_type": "audio",
+                    "codec_name": "aac",
+                    "bit_rate": "128000"
+                }
+            ]
+        });
+
+        let info = parse_probe_json("clip.mp4", raw);
+        assert_eq!(info.duration, 125.5);
+        assert_eq!(info.size, 1_048_576);
+        assert_eq!(info.format_name, "mov,mp4,m4a");
+        let video = info.video.unwrap();
+        assert_eq!(video.codec_name, "h264");
+        assert_eq!(video.width, Some(1920));
+        assert!((video.fps.unwrap() - 29.97).abs() < 0.01);
+        assert_eq!(info.audio.unwrap().codec_name, "aac");
+    }
+
+    #[test]
+    fn handles_missing_fields_and_zero_denominator_fps() {
+        assert!(parse_frame_rate("30/0").is_none());
+        let info = parse_probe_json("empty.bin", json!({}));
+        assert_eq!(info.duration, 0.0);
+        assert_eq!(info.format_name, "unknown");
+        assert!(info.video.is_none());
+        assert!(info.audio.is_none());
+    }
 }
