@@ -35,6 +35,11 @@ Thank you for your interest in contributing to MediaKit!
 - **UI text & Localization:** English (`en`) is the default and primary language. The app supports multiple locales (`en`, `pt-BR`, `pt-PT`, `es`, `fr`) located in `src/i18n/`. When adding or modifying UI strings, update `src/i18n/en.ts` first and supply matching keys across all supported locale files (`pt-BR.ts`, `pt-PT.ts`, `es.ts`, `fr.ts`).
 - **Code identifiers, comments, commits, and technical docs:** English.
 - **Commits:** Follow [Conventional Commits](https://www.conventionalcommits.org/) (e.g., `feat(youtube): ...`, `fix(queue): ...`, `refactor(rust): ...`).
+- **Branches:**
+  - `main`: production-ready releases only (protected).
+  - `develop`: integration branch for upcoming releases.
+  - Topic branches from `develop` using Conventional Commit prefixes: `feat/<name>`, `fix/<name>`, `docs/<name>`, `refactor/<name>`, `test/<name>`, `chore/<name>`, `ci/<name>`, `release/<version>`.
+  - `hotfix/<name>` from `main` for urgent production fixes, merged back into both `main` and `develop`.
 - Keep PRs focused and small. Preserve existing behavior unless the change specifically targets a bug or an approved feature.
 
 ## Pull Request Checklist
