@@ -137,10 +137,7 @@ pub fn run() {
         .expect("error while building tauri application")
         .run(|app, event| {
             if let RunEvent::ExitRequested { api, .. } = event {
-                let quitting = app
-                    .state::<AppLifecycle>()
-                    .quitting
-                    .load(Ordering::SeqCst);
+                let quitting = app.state::<AppLifecycle>().quitting.load(Ordering::SeqCst);
                 if !quitting {
                     api.prevent_exit();
                 }

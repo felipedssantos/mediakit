@@ -6,9 +6,7 @@ use tauri::{AppHandle, Emitter};
 use tauri_plugin_shell::process::CommandChild;
 use uuid::Uuid;
 
-use crate::types::{
-    AddYoutubeDownloadRequest, JobStatus, ProgressPayload, YoutubeDownloadJob,
-};
+use crate::types::{AddYoutubeDownloadRequest, JobStatus, ProgressPayload, YoutubeDownloadJob};
 use crate::youtube::download::run_download;
 
 pub struct YoutubeManager {

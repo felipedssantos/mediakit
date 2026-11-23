@@ -103,22 +103,12 @@ fn append_extract_audio(args: &mut Vec<String>, options: &EncodeOptions) {
             options.audio_bitrate.as_deref().unwrap_or("192k").into(),
         ]),
         "wav" => args.extend(["-c:a".into(), "pcm_s16le".into()]),
-        "ogg" => args.extend([
-            "-c:a".into(),
-            "libvorbis".into(),
-            "-q:a".into(),
-            "5".into(),
-        ]),
+        "ogg" => args.extend(["-c:a".into(), "libvorbis".into(), "-q:a".into(), "5".into()]),
         "flac" => args.extend(["-c:a".into(), "flac".into()]),
         _ => {
             let codec = options.audio_codec.as_deref().unwrap_or("aac");
             let bitrate = options.audio_bitrate.as_deref().unwrap_or("192k");
-            args.extend([
-                "-c:a".into(),
-                codec.into(),
-                "-b:a".into(),
-                bitrate.into(),
-            ]);
+            args.extend(["-c:a".into(), codec.into(), "-b:a".into(), bitrate.into()]);
         }
     }
 }
@@ -165,25 +155,35 @@ fn can_copy_streams(container: &str, options: &EncodeOptions, media: Option<&Med
     };
     let video = info.video.as_ref().map(|v| v.codec_name.as_str());
     let audio = info.audio.as_ref().map(|a| a.codec_name.as_str());
-    let video_ok = match (container, video) {
-        ("mp4" | "mov" | "m4v", Some("h264" | "hevc" | "mpeg4")) => true,
-        ("mkv", Some("h264" | "hevc" | "mpeg4" | "vp8" | "vp9" | "av1")) => true,
-        ("webm", Some("vp8" | "vp9" | "av1")) => true,
-        ("avi", Some("mpeg4" | "msmpeg4v3" | "h264")) => true,
-        _ => false,
-    };
-    let audio_ok = match (container, audio) {
-        (_, None) => true,
-        ("mp4" | "mov" | "m4v", Some("aac")) => true,
-        ("mkv", Some("aac" | "mp3" | "opus" | "vorbis" | "ac3" | "flac" | "pcm_s16le")) => true,
-        ("webm", Some("opus" | "vorbis")) => true,
-        ("avi", Some("mp3" | "mp2" | "pcm_s16le")) => true,
-        _ => false,
-    };
+    let video_ok = matches!(
+        (container, video),
+        ("mp4" | "mov" | "m4v", Some("h264" | "hevc" | "mpeg4"))
+            | (
+                "mkv",
+                Some("h264" | "hevc" | "mpeg4" | "vp8" | "vp9" | "av1")
+            )
+            | ("webm", Some("vp8" | "vp9" | "av1"))
+            | ("avi", Some("mpeg4" | "msmpeg4v3" | "h264"))
+    );
+    let audio_ok = matches!(
+        (container, audio),
+        (_, None)
+            | ("mp4" | "mov" | "m4v", Some("aac"))
+            | (
+                "mkv",
+                Some("aac" | "mp3" | "opus" | "vorbis" | "ac3" | "flac" | "pcm_s16le")
+            )
+            | ("webm", Some("opus" | "vorbis"))
+            | ("avi", Some("mp3" | "mp2" | "pcm_s16le"))
+    );
     video_ok && audio_ok
 }
 
-fn append_convert_video(args: &mut Vec<String>, options: &EncodeOptions, media: Option<&MediaInfo>) {
+fn append_convert_video(
+    args: &mut Vec<String>,
+    options: &EncodeOptions,
+    media: Option<&MediaInfo>,
+) {
     let container = video_container(options);
     if can_copy_streams(container, options, media) {
         args.extend(["-c".into(), "copy".into()]);
@@ -239,12 +239,14 @@ fn append_container_flags(args: &mut Vec<String>, container: &str) {
     }
 }
 
-fn append_compress(args: &mut Vec<String>, options: &EncodeOptions, default_codec: &str, default_crf: u32) {
+fn append_compress(
+    args: &mut Vec<String>,
+    options: &EncodeOptions,
+    default_codec: &str,
+    default_crf: u32,
+) {
     let use_gpu = options.use_gpu.unwrap_or(options.preset_id == "gpu_nvenc");
-    let requested = options
-        .video_codec
-        .as_deref()
-        .unwrap_or(default_codec);
+    let requested = options.video_codec.as_deref().unwrap_or(default_codec);
     let crf = options.crf.unwrap_or(default_crf);
 
     if use_gpu || requested.contains("nvenc") {

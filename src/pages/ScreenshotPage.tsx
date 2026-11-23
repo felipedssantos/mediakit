@@ -67,12 +67,13 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
     void hydrateSettings();
   }, [hydrate, hydrateSettings]);
 
-  useEffect(() => {
+  function handleSelectItem(id: string) {
+    setSelectedId(id);
     setCopied(false);
     setSavedPath(null);
     setError(null);
     setConfirmDelete(false);
-  }, [selected?.id]);
+  }
 
   async function handleCopy(item: ScreenshotHistoryItem) {
     setError(null);
@@ -109,6 +110,8 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
     setError(null);
     try {
       await remove(item.id);
+      setCopied(false);
+      setSavedPath(null);
       setConfirmDelete(false);
       if (selectedId === item.id) setSelectedId(null);
     } catch (err) {
@@ -187,7 +190,7 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => setSelectedId(item.id)}
+                      onClick={() => handleSelectItem(item.id)}
                       className={`border p-1 text-left ${
                         active
                           ? "border-lamp bg-flap"

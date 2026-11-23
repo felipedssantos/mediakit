@@ -33,7 +33,6 @@ export function FlapText({ text, cells, className = "" }: FlapTextProps) {
     if (previous.current === padded) return;
     if (reduceMotion) {
       previous.current = padded;
-      setShown(padded);
       return;
     }
 
@@ -49,8 +48,12 @@ export function FlapText({ text, cells, className = "" }: FlapTextProps) {
       if (frame[i] !== padded[i]) changed.push(i);
     }
     if (changed.length === 0) {
-      setShown(padded);
-      return;
+      const id = window.setTimeout(() => setShown(padded), 0);
+      timers.current.push(id);
+      return () => {
+        timers.current.forEach(window.clearTimeout);
+        timers.current = [];
+      };
     }
 
     changed.forEach((index, order) => {
@@ -75,10 +78,12 @@ export function FlapText({ text, cells, className = "" }: FlapTextProps) {
     };
   }, [padded, width, reduceMotion]);
 
+  const displayed = reduceMotion ? padded : shown;
+
   return (
     <span className={`cell inline-flex ${className}`}>
       <span className="sr-only">{target.trim()}</span>
-      {shown.split("").map((char, index) => (
+      {displayed.split("").map((char, index) => (
         <span
           key={index}
           aria-hidden

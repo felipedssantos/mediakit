@@ -37,10 +37,7 @@ pub async fn probe_media(app: &AppHandle, path: &str) -> Result<MediaInfo, Strin
 
 fn parse_probe_json(path: &str, json: Value) -> Result<MediaInfo, String> {
     let format = json.get("format").cloned().unwrap_or(Value::Null);
-    let duration = format
-        .get("duration")
-        .and_then(value_as_f64)
-        .unwrap_or(0.0);
+    let duration = format.get("duration").and_then(value_as_f64).unwrap_or(0.0);
     let size = format.get("size").and_then(value_as_u64).unwrap_or(0);
     let bit_rate = format.get("bit_rate").and_then(value_as_u64);
     let format_name = format

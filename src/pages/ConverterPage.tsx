@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { PlayCircle, X } from "lucide-react";
 
@@ -84,25 +84,22 @@ export function ConverterPage({ mode, onBack }: ConverterPageProps) {
   const [outputDir, setOutputDir] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const preset = useMemo(
-    () => presets.find((item) => item.id === presetId) ?? presets[0],
-    [presetId, presets],
-  );
-
   const validFiles = files.filter((file) => !file.error);
   const totalBytes = validFiles.reduce(
     (sum, file) => sum + (file.info?.size ?? 0),
     0,
   );
 
-  useEffect(() => {
-    if (!preset) return;
-    if (preset.defaultCrf) setCrf(preset.defaultCrf);
-    if (preset.videoCodec === "hevc" || preset.videoCodec === "h264") {
-      setVideoCodec(preset.videoCodec);
+  function handlePresetChange(nextId: PresetId) {
+    setPresetId(nextId);
+    const nextPreset = presets.find((item) => item.id === nextId);
+    if (!nextPreset) return;
+    if (nextPreset.defaultCrf) setCrf(nextPreset.defaultCrf);
+    if (nextPreset.videoCodec === "hevc" || nextPreset.videoCodec === "h264") {
+      setVideoCodec(nextPreset.videoCodec);
     }
-    setUseGpu(preset.usesGpu);
-  }, [preset]);
+    setUseGpu(nextPreset.usesGpu);
+  }
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -278,7 +275,7 @@ export function ConverterPage({ mode, onBack }: ConverterPageProps) {
                     value={presetId}
                     presets={presets}
                     nvencAvailable={nvenc}
-                    onChange={setPresetId}
+                    onChange={handlePresetChange}
                   />
                 ) : (
                   <>
@@ -286,7 +283,7 @@ export function ConverterPage({ mode, onBack }: ConverterPageProps) {
                       value={presetId}
                       presets={presets}
                       nvencAvailable={nvenc}
-                      onChange={setPresetId}
+                      onChange={handlePresetChange}
                     />
                     <div className="mt-4">
                       <p className="stamp mb-2 text-paint-dim">

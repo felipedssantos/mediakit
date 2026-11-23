@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  checks:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Lint frontend
+        run: npm run lint
+
+      - name: Typecheck frontend
+        run: npm run typecheck
+
+      - name: Run frontend unit tests
+        run: npx vitest run
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Create placeholder sidecar binaries for tauri_build
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path src-tauri/binaries | Out-Null
+          foreach ($name in @(
+            "ffmpeg-x86_64-pc-windows-msvc.exe",
+            "ffprobe-x86_64-pc-windows-msvc.exe",
+            "yt-dlp-x86_64-pc-windows-msvc.exe"
+          )) {
+            $path = Join-Path src-tauri/binaries $name
+            if (-not (Test-Path $path)) {
+              New-Item -ItemType File -Path $path | Out-Null
+            }
+          }
+
+      - name: Check Rust formatting
+        working-directory: src-tauri
+        run: cargo fmt --check
+
+      - name: Run Clippy
+        working-directory: src-tauri
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Run Rust unit tests
+        working-directory: src-tauri
+        run: cargo test

@@ -333,7 +333,8 @@ mod tests {
 
     #[test]
     fn parses_percent() {
-        let value = parse_progress("[download]  12.4% of  40.00MiB at  1.10MiB/s ETA 00:25").unwrap();
+        let value =
+            parse_progress("[download]  12.4% of  40.00MiB at  1.10MiB/s ETA 00:25").unwrap();
         assert!((value - 12.4).abs() < 0.01);
     }
 

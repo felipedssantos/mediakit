@@ -1,7 +1,6 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useState,
   type CSSProperties,
 } from "react";
@@ -93,23 +92,19 @@ export function ImageConverterPage({ mode, onBack }: ImageConverterPageProps) {
   const [busy, setBusy] = useState(false);
   const [dropError, setDropError] = useState<string | null>(null);
 
-  const preset = useMemo(
-    () => presets.find((item) => item.id === presetId) ?? presets[0],
-    [presetId, presets],
-  );
-
   const validFiles = files.filter((file) => !file.error);
   const totalBytes = validFiles.reduce(
     (sum, file) => sum + (file.info?.size ?? 0),
     0,
   );
 
-  useEffect(() => {
-    if (!preset) return;
-    if (!compress) return;
-    if (preset.defaultQuality) setQuality(preset.defaultQuality);
-    setImageFormat(preset.format);
-  }, [preset, compress]);
+  function handleCompressPresetChange(nextId: ImagePresetId) {
+    setPresetId(nextId);
+    const nextPreset = presets.find((item) => item.id === nextId);
+    if (!nextPreset) return;
+    if (nextPreset.defaultQuality) setQuality(nextPreset.defaultQuality);
+    setImageFormat(nextPreset.format);
+  }
 
   const addImagePaths = useCallback(
     async (paths: string[]) => {
@@ -303,7 +298,7 @@ export function ImageConverterPage({ mode, onBack }: ImageConverterPageProps) {
                     value={presetId}
                     presets={presets}
                     codes={IMAGE_PRESET_CODES}
-                    onChange={setPresetId}
+                    onChange={handleCompressPresetChange}
                   />
                 ) : (
                   <PresetSelector

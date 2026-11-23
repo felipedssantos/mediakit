@@ -13,8 +13,8 @@ use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use image::{ExtendedColorType, GenericImageView, ImageEncoder};
 use serde::{Deserialize, Serialize};
 use tauri::{
-    AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, Position, Size, State,
-    WebviewUrl, WebviewWindow, WebviewWindowBuilder,
+    AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, Position, Size, State, WebviewUrl,
+    WebviewWindow, WebviewWindowBuilder,
 };
 use uuid::Uuid;
 use xcap::{Monitor, Window};
@@ -223,7 +223,9 @@ fn archive_screenshot(
 fn rgba_to_dib(image: &image::RgbaImage) -> Vec<u8> {
     let width = image.width();
     let height = image.height();
-    let pixel_bytes = (width as usize).saturating_mul(height as usize).saturating_mul(4);
+    let pixel_bytes = (width as usize)
+        .saturating_mul(height as usize)
+        .saturating_mul(4);
     let mut dib = vec![0u8; 40 + pixel_bytes];
     dib[0..4].copy_from_slice(&40u32.to_le_bytes());
     dib[4..8].copy_from_slice(&(width as i32).to_le_bytes());
@@ -233,7 +235,7 @@ fn rgba_to_dib(image: &image::RgbaImage) -> Vec<u8> {
     dib[20..24].copy_from_slice(&(pixel_bytes as u32).to_le_bytes());
     let src = image.as_raw();
     let dst = &mut dib[40..];
-    for (index, pixel) in src.chunks_exact(4).enumerate() {
+    for (index, pixel) in src.as_chunks::<4>().0.iter().enumerate() {
         let offset = index * 4;
         dst[offset] = pixel[2];
         dst[offset + 1] = pixel[1];
@@ -282,7 +284,7 @@ fn copy_rgba_on_main(app: &AppHandle, image: &image::RgbaImage) -> Result<(), St
     #[cfg(windows)]
     {
         let dib = rgba_to_dib(image);
-        return copy_dib_on_main(app, dib);
+        copy_dib_on_main(app, dib)
     }
     #[cfg(not(windows))]
     {
@@ -382,7 +384,7 @@ fn collect_windows() -> Vec<ScreenshotWindowInfo> {
             ))
         })
         .collect::<Vec<_>>();
-    windows.sort_by(|a, b| b.0.cmp(&a.0));
+    windows.sort_by_key(|a| std::cmp::Reverse(a.0));
     windows.into_iter().map(|(_, info)| info).collect()
 }
 
@@ -436,23 +438,19 @@ fn point_in_monitor(px: i32, py: i32, x: i32, y: i32, width: u32, height: u32) -
 }
 
 fn create_overlay_window(app: &AppHandle, label: &str) -> Result<WebviewWindow, String> {
-    WebviewWindowBuilder::new(
-        app,
-        label,
-        WebviewUrl::App("index.html?snip=1".into()),
-    )
-    .initialization_script("window.__CONVERSOR_SNIP__ = true;")
-    .title("Selecionar área")
-    .decorations(false)
-    .transparent(false)
-    .always_on_top(true)
-    .skip_taskbar(true)
-    .resizable(false)
-    .shadow(false)
-    .visible(false)
-    .focused(false)
-    .build()
-    .map_err(|err| format!("Não foi possível preparar o overlay de print: {err}"))
+    WebviewWindowBuilder::new(app, label, WebviewUrl::App("index.html?snip=1".into()))
+        .initialization_script("window.__CONVERSOR_SNIP__ = true;")
+        .title("Selecionar área")
+        .decorations(false)
+        .transparent(false)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .resizable(false)
+        .shadow(false)
+        .visible(false)
+        .focused(false)
+        .build()
+        .map_err(|err| format!("Não foi possível preparar o overlay de print: {err}"))
 }
 
 fn ensure_overlay_window(app: &AppHandle, label: &str) -> Result<WebviewWindow, String> {
@@ -539,7 +537,10 @@ fn restore_after_overlay(app: &AppHandle) {
     }
 }
 
-fn complete_capture(app: &AppHandle, capture: ScreenshotCapture) -> Result<ScreenshotCapture, String> {
+fn complete_capture(
+    app: &AppHandle,
+    capture: ScreenshotCapture,
+) -> Result<ScreenshotCapture, String> {
     {
         let state = app.state::<ScreenshotState>();
         let mut region = state.region.lock().map_err(map_err)?;
@@ -626,8 +627,16 @@ pub fn ensure_overlay(app: &AppHandle) -> Result<(), String> {
     ensure_overlay_window(app, OVERLAY_LABEL).map(|_| ())
 }
 
-fn show_monitor_overlays(app: &AppHandle, shots: &[MonitorShot], dtos: &HashMap<String, RegionSessionDto>, windows: &[ScreenshotWindowInfo]) -> Result<(), String> {
-    let used: Vec<String> = shots.iter().map(|shot| shot.overlay_label.clone()).collect();
+fn show_monitor_overlays(
+    app: &AppHandle,
+    shots: &[MonitorShot],
+    dtos: &HashMap<String, RegionSessionDto>,
+    windows: &[ScreenshotWindowInfo],
+) -> Result<(), String> {
+    let used: Vec<String> = shots
+        .iter()
+        .map(|shot| shot.overlay_label.clone())
+        .collect();
     let (cx, cy) = cursor_pos();
     let focus_label = shots
         .iter()
@@ -754,10 +763,14 @@ pub async fn begin_region_capture(app: AppHandle) -> Result<RegionSessionDto, St
 }
 
 #[tauri::command]
-pub fn get_region_session(window: WebviewWindow, app: AppHandle) -> Result<RegionSessionDto, String> {
+pub fn get_region_session(
+    window: WebviewWindow,
+    app: AppHandle,
+) -> Result<RegionSessionDto, String> {
     get_region_session_inner(&app, window.label())
 }
 
+#[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub async fn commit_snip_capture(
     window: WebviewWindow,
@@ -795,9 +808,7 @@ pub async fn commit_snip_capture(
             let bytes = base64::engine::general_purpose::STANDARD
                 .decode(encoded)
                 .map_err(map_err)?;
-            Ok(image::load_from_memory(&bytes)
-                .map_err(map_err)?
-                .to_rgba8())
+            Ok(image::load_from_memory(&bytes).map_err(map_err)?.to_rgba8())
         } else {
             prepared.ok_or_else(|| "Nenhuma seleção de área em andamento".to_string())
         }
@@ -806,17 +817,15 @@ pub async fn commit_snip_capture(
     .map_err(|err| err.to_string())??;
 
     let result = match action.as_str() {
-        "copy" => copy_rgba_on_main(&app, &prepared).and_then(|_| {
-            archive_screenshot(&app_archive, &prepared, &action)
-        }),
+        "copy" => copy_rgba_on_main(&app, &prepared)
+            .and_then(|_| archive_screenshot(&app_archive, &prepared, &action)),
         "save" => tauri::async_runtime::spawn_blocking(move || {
             let dest_dir = dest_dir.unwrap_or_default();
             if dest_dir.trim().is_empty() {
                 return Err("Escolha uma pasta para salvar o print".to_string());
             }
-            fs::create_dir_all(&dest_dir).map_err(|err| {
-                format!("Não foi possível criar a pasta de destino: {err}")
-            })?;
+            fs::create_dir_all(&dest_dir)
+                .map_err(|err| format!("Não foi possível criar a pasta de destino: {err}"))?;
             let name = file_name
                 .filter(|value| !value.trim().is_empty())
                 .unwrap_or_else(|| format!("{}.png", Uuid::new_v4()));
@@ -831,9 +840,7 @@ pub async fn commit_snip_capture(
     let item = match result {
         Ok(item) => item,
         Err(err) => {
-            if let Err(err) = show_session_overlays(&app) {
-                return Err(err);
-            }
+            show_session_overlays(&app)?;
             return Err(err);
         }
     };
@@ -954,9 +961,8 @@ pub fn save_screenshot(
     if dest_dir.trim().is_empty() {
         return Err("Escolha uma pasta para salvar o print".into());
     }
-    fs::create_dir_all(&dest_dir).map_err(|err| {
-        format!("Não foi possível criar a pasta de destino: {err}")
-    })?;
+    fs::create_dir_all(&dest_dir)
+        .map_err(|err| format!("Não foi possível criar a pasta de destino: {err}"))?;
     let dest = Path::new(&dest_dir).join(file_name);
     fs::copy(&source_path, &dest).map_err(map_err)?;
     Ok(dest.to_string_lossy().into_owned())
@@ -970,7 +976,10 @@ pub fn list_screenshot_history(app: AppHandle) -> Result<Vec<ScreenshotHistoryIt
 }
 
 #[tauri::command]
-pub fn delete_screenshot_history(app: AppHandle, id: String) -> Result<Vec<ScreenshotHistoryItem>, String> {
+pub fn delete_screenshot_history(
+    app: AppHandle,
+    id: String,
+) -> Result<Vec<ScreenshotHistoryItem>, String> {
     let mut items = read_history_index(&app);
     if let Some(index) = items.iter().position(|item| item.id == id) {
         let removed = items.remove(index);

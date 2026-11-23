@@ -158,10 +158,9 @@ fn parse_out_time_seconds(line: &str) -> Option<f64> {
         rest.parse::<f64>().ok()? / 1_000_000.0
     } else if let Some(rest) = line.strip_prefix("out_time_ms=") {
         rest.parse::<f64>().ok()? / 1_000_000.0
-    } else if let Some(rest) = line.strip_prefix("out_time=") {
-        parse_timestamp(rest)?
     } else {
-        return None;
+        let rest = line.strip_prefix("out_time=")?;
+        parse_timestamp(rest)?
     };
     if seconds.is_finite() && seconds >= 0.0 {
         Some(seconds)
@@ -211,10 +210,7 @@ mod tests {
     #[test]
     fn out_time_ms_is_microseconds() {
         // 5 seconds encoded of a 50s file => 10%, not 1000%
-        assert_eq!(
-            parse_out_time_seconds("out_time_ms=5000000").unwrap(),
-            5.0
-        );
+        assert_eq!(parse_out_time_seconds("out_time_ms=5000000").unwrap(), 5.0);
         let progress = parse_progress("out_time_ms=5000000", 50.0).unwrap();
         assert!((progress - 10.0).abs() < 0.01);
     }

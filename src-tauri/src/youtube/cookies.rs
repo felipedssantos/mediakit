@@ -1,8 +1,10 @@
 use std::path::PathBuf;
 use std::sync::Mutex;
 
+type BrowserProbe = (&'static str, fn() -> Option<PathBuf>);
+
 /// Nomes aceitos pelo `--cookies-from-browser` do yt-dlp (Windows).
-const CANDIDATES: &[(&str, fn() -> Option<PathBuf>)] = &[
+const CANDIDATES: &[BrowserProbe] = &[
     ("chrome", chrome_dir),
     ("edge", edge_dir),
     ("firefox", firefox_dir),
@@ -37,7 +39,10 @@ pub fn attempts() -> Vec<Option<String>> {
     }
 
     for name in installed {
-        if !out.iter().any(|item| item.as_deref() == Some(name.as_str())) {
+        if !out
+            .iter()
+            .any(|item| item.as_deref() == Some(name.as_str()))
+        {
             out.push(Some(name));
         }
     }
@@ -85,7 +90,12 @@ fn exists_dir(path: PathBuf) -> Option<PathBuf> {
 }
 
 fn chrome_dir() -> Option<PathBuf> {
-    exists_dir(env_dir("LOCALAPPDATA")?.join("Google").join("Chrome").join("User Data"))
+    exists_dir(
+        env_dir("LOCALAPPDATA")?
+            .join("Google")
+            .join("Chrome")
+            .join("User Data"),
+    )
 }
 
 fn edge_dir() -> Option<PathBuf> {
