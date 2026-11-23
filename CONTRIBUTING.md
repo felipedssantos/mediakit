@@ -32,7 +32,7 @@ Thank you for your interest in contributing to MediaKit!
 
 ## Coding Conventions
 
-- **UI text:** Brazilian Portuguese (`pt-BR`).
+- **UI text & Localization:** English (`en`) is the default and primary language. The app supports multiple locales (`en`, `pt-BR`, `pt-PT`, `es`, `fr`) located in `src/i18n/`. When adding or modifying UI strings, update `src/i18n/en.ts` first and supply matching keys across all supported locale files (`pt-BR.ts`, `pt-PT.ts`, `es.ts`, `fr.ts`).
 - **Code identifiers, comments, commits, and technical docs:** English.
 - **Commits:** Follow [Conventional Commits](https://www.conventionalcommits.org/) (e.g., `feat(youtube): ...`, `fix(queue): ...`, `refactor(rust): ...`).
 - Keep PRs focused and small. Preserve existing behavior unless the change specifically targets a bug or an approved feature.
@@ -54,3 +54,4 @@ cargo test
 Please ensure:
 - No binaries in `src-tauri/binaries/*.exe`, secrets, or local absolute paths are included.
 - New non-trivial logic includes unit tests.
+- Any new or updated UI copy is localized with English (`en`) as the base in `src/i18n/`.
