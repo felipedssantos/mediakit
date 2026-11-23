@@ -1,5 +1,7 @@
-import { YoutubeJobCard } from "./YoutubeJobCard";
+import { ptBR } from "../i18n/pt-BR";
 import type { YoutubeDownloadJob } from "../types/youtube";
+import { JobQueueList } from "./JobQueueList";
+import { YoutubeJobCard } from "./YoutubeJobCard";
 
 interface YoutubeJobQueueProps {
   jobs: YoutubeDownloadJob[];
@@ -12,32 +14,20 @@ export function YoutubeJobQueue({
   onCancel,
   onRetry,
 }: YoutubeJobQueueProps) {
-  if (jobs.length === 0) {
-    return (
-      <div className="flex h-full min-h-0 flex-1 flex-col items-start justify-center border border-dashed border-steel-dim px-4 py-8">
-        <span className="stamp text-paint-faint">Fila vazia</span>
-        <p className="mt-2 text-sm leading-6 text-paint-dim">
-          Cada download aparece aqui com o progresso ao vivo, e você pode
-          cancelar a qualquer momento.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto border-t border-rule">
-      {jobs
-        .map((job, index) => ({ job, line: index + 1 }))
-        .reverse()
-        .map(({ job, line }) => (
-          <YoutubeJobCard
-            key={job.id}
-            job={job}
-            line={line}
-            onCancel={onCancel}
-            onRetry={onRetry}
-          />
-        ))}
-    </div>
+    <JobQueueList
+      jobs={jobs}
+      fill
+      emptyDetail={ptBR.youtube.queueEmpty}
+      renderItem={(job, line) => (
+        <YoutubeJobCard
+          key={job.id}
+          job={job}
+          line={line}
+          onCancel={onCancel}
+          onRetry={onRetry}
+        />
+      )}
+    />
   );
 }

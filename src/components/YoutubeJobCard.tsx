@@ -1,9 +1,7 @@
-import { FolderOpen, RotateCcw, X } from "lucide-react";
-
-import { JobRow, RowAction } from "./JobRow";
+import { ptBR } from "../i18n/pt-BR";
 import { BOARD_STATUS } from "../lib/boardStatus";
-import { revealPath } from "../lib/tauri";
 import type { YoutubeDownloadJob } from "../types/youtube";
+import { JobCardBase } from "./JobCardBase";
 
 interface YoutubeJobCardProps {
   job: YoutubeDownloadJob;
@@ -18,60 +16,37 @@ export function YoutubeJobCard({
   onCancel,
   onRetry,
 }: YoutubeJobCardProps) {
-  const canCancel =
-    job.status === "queued" ||
-    job.status === "running" ||
-    job.status === "finalizing";
-  const canRetry = job.status === "failed" || job.status === "cancelled";
-  const openPath = job.output_path ?? job.output_dir;
-  const status = BOARD_STATUS[job.status];
-
   const statusLabel =
-    job.status === "running" ? "Baixando" : status.label;
+    job.status === "running"
+      ? ptBR.youtube.cardDownloading
+      : BOARD_STATUS[job.status].label;
 
   const detail =
     job.options.mode === "audio"
-      ? `Áudio ${job.options.audio_format.toUpperCase()}`
-      : `Vídeo ${job.options.quality === "best" ? "melhor disponível" : job.options.quality}`;
+      ? ptBR.youtube.cardAudioDetail(job.options.audio_format.toUpperCase())
+      : ptBR.youtube.cardVideoDetail(job.options.quality);
+
+  const speed =
+    job.status === "finalizing"
+      ? ptBR.youtube.cardFinalizingSpeed
+      : job.status === "running"
+        ? job.speed
+        : null;
 
   return (
-    <JobRow
+    <JobCardBase
+      id={job.id}
       line={line}
       title={job.title}
       detail={detail}
-      status={status}
+      jobStatus={job.status}
       statusLabel={statusLabel}
       progress={job.progress}
-      speed={
-        job.status === "finalizing"
-          ? "juntando arquivo"
-          : job.status === "running"
-            ? job.speed
-            : null
-      }
+      speed={speed}
       error={job.error}
-      actions={
-        <>
-          {canCancel && (
-            <RowAction danger onClick={() => onCancel(job.id)}>
-              <X size={12} />
-              Cancelar
-            </RowAction>
-          )}
-          {canRetry && (
-            <RowAction onClick={() => onRetry(job.id)}>
-              <RotateCcw size={12} />
-              De novo
-            </RowAction>
-          )}
-          {job.status === "completed" && (
-            <RowAction onClick={() => void revealPath(openPath)}>
-              <FolderOpen size={12} />
-              Abrir pasta
-            </RowAction>
-          )}
-        </>
-      }
+      revealTarget={job.output_path ?? job.output_dir}
+      onCancel={onCancel}
+      onRetry={onRetry}
     />
   );
 }

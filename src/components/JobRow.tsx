@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 
+import { ptBR } from "../i18n/pt-BR";
 import { FlapText } from "./FlapText";
 import { ProgressBar } from "./ProgressBar";
 import { TONE_EDGE, TONE_TEXT, type BoardStatus } from "../lib/boardStatus";
@@ -82,7 +83,9 @@ export function JobRow({
 
       {error && (
         <p className="mt-2 text-xs leading-5 text-fault">
-          <span className="stamp mr-1.5 text-fault">Motivo</span>
+          <span className="stamp mr-1.5 text-fault">
+            {ptBR.common.reasonStamp}
+          </span>
           <span className="line-clamp-3 align-middle">{error}</span>
         </p>
       )}

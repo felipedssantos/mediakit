@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
-import { FolderOpen } from "lucide-react";
 
+import { ptBR } from "../i18n/pt-BR";
 import { PRESETS, type PresetId } from "../lib/presets";
 import { FieldHint } from "./FieldHint";
+import { ConcurrencySlider } from "./settings/ConcurrencySlider";
+import { OutputDirField } from "./settings/OutputDirField";
+import { QualitySlider } from "./settings/QualitySlider";
 
 interface OutputSettingsProps {
   presetId: PresetId;
@@ -24,9 +27,9 @@ interface OutputSettingsProps {
 }
 
 function qualityLabel(crf: number): string {
-  if (crf <= 21) return "Alta qualidade";
-  if (crf <= 28) return "Equilibrado";
-  return "Arquivo menor";
+  if (crf <= 21) return ptBR.common.qualityHigh;
+  if (crf <= 28) return ptBR.common.qualityBalanced;
+  return ptBR.common.qualitySmaller;
 }
 
 const selectClass =
@@ -60,93 +63,69 @@ export function OutputSettings({
     <div className="flex flex-col border border-rule">
       <div className="px-3 py-2.5">
         <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <label className="stamp block text-paint-dim">
-              Pasta de destino
-            </label>
-            <div className="mt-1 flex gap-2">
-              <p className="cell min-w-0 flex-1 truncate border border-steel-dim bg-flap px-2.5 py-1.5 text-xs text-paint-dim">
-                {outputDir ?? "Mesma pasta do arquivo original"}
-              </p>
-              <button
-                type="button"
-                onClick={onPickOutputDir}
-                className="stamp ink inline-flex shrink-0 items-center gap-1.5 border border-steel-dim px-2.5 py-1.5 text-paint-dim hover:border-lamp hover:text-lamp"
-              >
-                <FolderOpen size={13} />
-                Escolher
-              </button>
-            </div>
-          </div>
+          <OutputDirField
+            className="sm:col-span-2"
+            value={outputDir}
+            onPick={onPickOutputDir}
+          />
 
-          {!audioOnly && (
+          {!audioOnly ? (
             <>
-              <div>
-                <label className="flex items-baseline justify-between gap-3">
-                  <span className="stamp text-paint-dim">Qualidade</span>
-                  <span className="cell text-[11px] text-lamp">
-                    {crf} · {qualityLabel(crf)}
-                  </span>
-                </label>
-                <input
-                  type="range"
-                  min={18}
-                  max={35}
-                  value={crf}
-                  onChange={(event) => onCrfChange(Number(event.target.value))}
-                  className="mt-1.5 w-full accent-lamp"
-                />
-              </div>
+              <QualitySlider
+                min={18}
+                max={35}
+                value={crf}
+                label={qualityLabel(crf)}
+                onChange={onCrfChange}
+              />
+
+              <ConcurrencySlider
+                value={maxConcurrency}
+                onChange={onConcurrencyChange}
+              />
 
               <div>
-                <label className="flex items-baseline justify-between gap-3">
-                  <span className="stamp text-paint-dim">Ao mesmo tempo</span>
-                  <span className="cell text-[11px] text-lamp">
-                    {maxConcurrency}
-                  </span>
+                <label className="stamp block text-paint-dim">
+                  {ptBR.outputSettings.resolutionLabel}
                 </label>
-                <input
-                  type="range"
-                  min={1}
-                  max={4}
-                  value={maxConcurrency}
-                  onChange={(event) =>
-                    onConcurrencyChange(Number(event.target.value))
-                  }
-                  className="mt-1.5 w-full accent-lamp"
-                />
-              </div>
-
-              <div>
-                <label className="stamp block text-paint-dim">Resolução</label>
                 <select
                   value={resolution}
                   onChange={(event) => onResolutionChange(event.target.value)}
                   className={selectClass}
                 >
-                  <option value="original">Manter original</option>
-                  <option value="1080p">1080p (Full HD)</option>
-                  <option value="720p">720p (HD)</option>
-                  <option value="480p">480p (menor arquivo)</option>
+                  <option value="original">
+                    {ptBR.outputSettings.resOriginal}
+                  </option>
+                  <option value="1080p">{ptBR.outputSettings.res1080p}</option>
+                  <option value="720p">{ptBR.outputSettings.res720p}</option>
+                  <option value="480p">{ptBR.outputSettings.res480p}</option>
                 </select>
               </div>
 
               <div>
-                <label className="stamp block text-paint-dim">Codec</label>
+                <label className="stamp block text-paint-dim">
+                  {ptBR.outputSettings.codecLabel}
+                </label>
                 {fixedCodec ? (
                   <p className="mt-1 border border-steel-dim bg-flap px-2 py-1.5 text-sm text-paint-dim">
                     {container === "webm"
-                      ? "VP9 + Opus, exigido pelo WebM"
-                      : "MPEG-4 + MP3, exigido pelo AVI"}
+                      ? ptBR.outputSettings.fixedCodecWebm
+                      : ptBR.outputSettings.fixedCodecAvi}
                   </p>
                 ) : (
                   <select
                     value={videoCodec}
-                    onChange={(event) => onVideoCodecChange(event.target.value)}
+                    onChange={(event) =>
+                      onVideoCodecChange(event.target.value)
+                    }
                     className={selectClass}
                   >
-                    <option value="h264">H.264 (mais compatível)</option>
-                    <option value="hevc">H.265 (arquivo menor)</option>
+                    <option value="h264">
+                      {ptBR.outputSettings.codecH264}
+                    </option>
+                    <option value="hevc">
+                      {ptBR.outputSettings.codecHevc}
+                    </option>
                   </select>
                 )}
               </div>
@@ -154,16 +133,16 @@ export function OutputSettings({
               <label className="flex items-center justify-between gap-3 border border-rule bg-flap px-2.5 py-2 sm:col-span-2">
                 <span className="min-w-0">
                   <span className="stamp block text-paint-dim">
-                    Placa NVIDIA
+                    {ptBR.outputSettings.nvidiaLabel}
                   </span>
                   <span className="mt-0.5 block text-xs leading-4 text-paint-faint">
                     {!gpuAllowed
-                      ? "Este tipo de arquivo não usa a placa NVIDIA."
+                      ? ptBR.outputSettings.nvidiaUnsupportedFormat
                       : nvencAvailable
                         ? gpuLocked
-                          ? "Este preset já usa a GPU."
-                          : "Converte mais rápido com a placa de vídeo."
-                        : "Nenhuma NVIDIA compatível neste computador."}
+                          ? ptBR.outputSettings.nvidiaPresetLocked
+                          : ptBR.outputSettings.nvidiaAvailable
+                        : ptBR.outputSettings.nvidiaUnavailable}
                   </span>
                 </span>
                 <input
@@ -175,30 +154,13 @@ export function OutputSettings({
                 />
               </label>
             </>
-          )}
-
-          {audioOnly && (
+          ) : (
             <div className="sm:col-span-2">
-              <label className="flex items-baseline justify-between gap-3">
-                <span className="stamp text-paint-dim">Ao mesmo tempo</span>
-                <span className="cell text-[11px] text-lamp">
-                  {maxConcurrency}
-                </span>
-              </label>
-              <input
-                type="range"
-                min={1}
-                max={4}
+              <ConcurrencySlider
                 value={maxConcurrency}
-                onChange={(event) =>
-                  onConcurrencyChange(Number(event.target.value))
-                }
-                className="mt-1.5 w-full accent-lamp"
+                onChange={onConcurrencyChange}
               />
-              <FieldHint>
-                Números maiores terminam a fila mais rápido, mas deixam o
-                computador mais ocupado.
-              </FieldHint>
+              <FieldHint>{ptBR.outputSettings.audioConcurrencyHint}</FieldHint>
             </div>
           )}
         </div>

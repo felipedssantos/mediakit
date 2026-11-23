@@ -1,3 +1,4 @@
+import { ptBR } from "../i18n/pt-BR";
 import type { Job } from "../types/job";
 
 export type BoardTone = "idle" | "running" | "cleared" | "fault";
@@ -9,12 +10,12 @@ export interface BoardStatus {
 
 /** Vocabulário do painel: cada estado é uma palavra estampada, não uma cor. */
 export const BOARD_STATUS: Record<Job["status"], BoardStatus> = {
-  queued: { label: "Na fila", tone: "idle" },
-  running: { label: "Em andamento", tone: "running" },
-  finalizing: { label: "Juntando", tone: "running" },
-  completed: { label: "Concluído", tone: "cleared" },
-  failed: { label: "Falhou", tone: "fault" },
-  cancelled: { label: "Cancelado", tone: "idle" },
+  queued: { label: ptBR.boardStatus.queued, tone: "idle" },
+  running: { label: ptBR.boardStatus.running, tone: "running" },
+  finalizing: { label: ptBR.boardStatus.finalizing, tone: "running" },
+  completed: { label: ptBR.boardStatus.completed, tone: "cleared" },
+  failed: { label: ptBR.boardStatus.failed, tone: "fault" },
+  cancelled: { label: ptBR.boardStatus.cancelled, tone: "idle" },
 };
 
 export const TONE_TEXT: Record<BoardTone, string> = {

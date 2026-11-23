@@ -1,5 +1,6 @@
 import { UploadCloud } from "lucide-react";
 
+import { ptBR } from "../i18n/pt-BR";
 import { BoardWait } from "./BoardWait";
 
 interface DropZoneProps {
@@ -18,10 +19,10 @@ export function DropZone({
   probing,
   onBrowse,
   compact,
-  title = "Arraste seus vídeos para cá",
-  hint = "Ou clique para escolher um ou vários arquivos do computador.",
-  probingTitle = "Lendo os arquivos",
-  probingHint = "A placa está conferindo duração e tamanho de cada vídeo.",
+  title = ptBR.dropZone.defaultTitle,
+  hint = ptBR.dropZone.defaultHint,
+  probingTitle = ptBR.dropZone.probingTitle,
+  probingHint = ptBR.dropZone.probingHint,
 }: DropZoneProps) {
   return (
     <button
@@ -33,7 +34,7 @@ export function DropZone({
       }`}
     >
       {probing ? (
-        <BoardWait label="Lendo os arquivos" />
+        <BoardWait label={probingTitle} />
       ) : (
         <UploadCloud
           size={20}

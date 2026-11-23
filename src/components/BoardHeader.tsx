@@ -1,6 +1,8 @@
 import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { ptBR } from "../i18n/pt-BR";
+
 interface BoardHeaderProps {
   title: string;
   detail: string;
@@ -23,7 +25,7 @@ export function BoardHeader({
           className="stamp ink inline-flex shrink-0 items-center gap-1.5 border border-rule bg-void px-2.5 py-1.5 text-paint-dim hover:border-lamp hover:text-lamp"
         >
           <ArrowLeft size={13} />
-          Início
+          {ptBR.common.backHome}
         </button>
         <div className="min-w-0 border-l border-rule pl-3">
           <h1 className="truncate text-base font-semibold leading-tight text-paint">

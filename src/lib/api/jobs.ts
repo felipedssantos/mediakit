@@ -1,7 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { open } from "@tauri-apps/plugin-dialog";
-import { revealItemInDir } from "@tauri-apps/plugin-opener";
 
 import type {
   AddJobRequest,
@@ -10,9 +8,7 @@ import type {
   Job,
   MediaInfo,
   ProgressPayload,
-} from "../types/job";
-import { IMAGE_EXTENSIONS } from "./imagePresets";
-import { VIDEO_EXTENSIONS } from "./presets";
+} from "../../types/job";
 
 export async function probeMedia(path: string): Promise<MediaInfo> {
   return invoke("probe_media", { path });
@@ -86,44 +82,4 @@ export function onJobProgress(
   return listen<ProgressPayload>("job-progress", (event) =>
     handler(event.payload),
   );
-}
-
-export async function pickVideoFiles(): Promise<string[]> {
-  const selected = await open({
-    multiple: true,
-    directory: false,
-    filters: [{ name: "Vídeo", extensions: VIDEO_EXTENSIONS }],
-  });
-  if (!selected) return [];
-  return Array.isArray(selected) ? selected : [selected];
-}
-
-export async function pickImageFiles(): Promise<string[]> {
-  const selected = await open({
-    multiple: true,
-    directory: false,
-    filters: [{ name: "Imagem", extensions: IMAGE_EXTENSIONS }],
-  });
-  if (!selected) return [];
-  return Array.isArray(selected) ? selected : [selected];
-}
-
-export async function pickOutputDirectory(): Promise<string | null> {
-  const selected = await open({
-    directory: true,
-    multiple: false,
-  });
-  if (!selected || Array.isArray(selected)) return null;
-  return selected;
-}
-
-export async function revealPath(path: string): Promise<void> {
-  const target = path.trim();
-  if (!target) return;
-  try {
-    await revealItemInDir(target);
-  } catch {
-    const folder = target.replace(/[/\\][^/\\]+$/, "");
-    await revealItemInDir(folder || target);
-  }
 }

@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-import { probeMedia } from "../lib/tauri";
+import { probeMedia } from "../lib/api/jobs";
 import { fileNameFromPath } from "../lib/presets";
 import type { PendingFile } from "../types/job";
 

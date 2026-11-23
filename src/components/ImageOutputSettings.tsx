@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
-import { FolderOpen } from "lucide-react";
 
+import { ptBR } from "../i18n/pt-BR";
 import type { ImageFormat } from "../lib/imagePresets";
 import { FieldHint } from "./FieldHint";
+import { ConcurrencySlider } from "./settings/ConcurrencySlider";
+import { OutputDirField } from "./settings/OutputDirField";
+import { QualitySlider } from "./settings/QualitySlider";
 
 interface ImageOutputSettingsProps {
   quality: number;
@@ -20,9 +23,9 @@ interface ImageOutputSettingsProps {
 }
 
 function qualityLabel(quality: number): string {
-  if (quality >= 90) return "Alta qualidade";
-  if (quality >= 75) return "Equilibrado";
-  return "Arquivo menor";
+  if (quality >= 90) return ptBR.common.qualityHigh;
+  if (quality >= 75) return ptBR.common.qualityBalanced;
+  return ptBR.common.qualitySmaller;
 }
 
 const selectClass =
@@ -49,82 +52,51 @@ export function ImageOutputSettings({
     <div className="flex flex-col border border-rule">
       <div className="px-3 py-2.5">
         <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <label className="stamp block text-paint-dim">
-              Pasta de destino
-            </label>
-            <div className="mt-1 flex gap-2">
-              <p className="cell min-w-0 flex-1 truncate border border-steel-dim bg-flap px-2.5 py-1.5 text-xs text-paint-dim">
-                {outputDir ?? "Mesma pasta do arquivo original"}
-              </p>
-              <button
-                type="button"
-                onClick={onPickOutputDir}
-                className="stamp ink inline-flex shrink-0 items-center gap-1.5 border border-steel-dim px-2.5 py-1.5 text-paint-dim hover:border-lamp hover:text-lamp"
-              >
-                <FolderOpen size={13} />
-                Escolher
-              </button>
-            </div>
-          </div>
+          <OutputDirField
+            className="sm:col-span-2"
+            value={outputDir}
+            onPick={onPickOutputDir}
+          />
 
           {!lossless && (
-            <div>
-              <label className="flex items-baseline justify-between gap-3">
-                <span className="stamp text-paint-dim">Qualidade</span>
-                <span className="cell text-[11px] text-lamp">
-                  {quality} · {qualityLabel(quality)}
-                </span>
-              </label>
-              <input
-                type="range"
-                min={50}
-                max={95}
-                value={quality}
-                onChange={(event) =>
-                  onQualityChange(Number(event.target.value))
-                }
-                className="mt-1.5 w-full accent-lamp"
-              />
-            </div>
+            <QualitySlider
+              min={50}
+              max={95}
+              value={quality}
+              label={qualityLabel(quality)}
+              onChange={onQualityChange}
+            />
           )}
 
-          <div className={lossless ? "sm:col-span-2" : undefined}>
-            <label className="flex items-baseline justify-between gap-3">
-              <span className="stamp text-paint-dim">Ao mesmo tempo</span>
-              <span className="cell text-[11px] text-lamp">
-                {maxConcurrency}
-              </span>
-            </label>
-            <input
-              type="range"
-              min={1}
-              max={4}
-              value={maxConcurrency}
-              onChange={(event) =>
-                onConcurrencyChange(Number(event.target.value))
-              }
-              className="mt-1.5 w-full accent-lamp"
-            />
-          </div>
+          <ConcurrencySlider
+            className={lossless ? "sm:col-span-2" : undefined}
+            value={maxConcurrency}
+            onChange={onConcurrencyChange}
+          />
 
           <div>
-            <label className="stamp block text-paint-dim">Tamanho máximo</label>
+            <label className="stamp block text-paint-dim">
+              {ptBR.outputSettings.maxSizeLabel}
+            </label>
             <select
               value={resolution}
               onChange={(event) => onResolutionChange(event.target.value)}
               className={selectClass}
             >
-              <option value="original">Manter original</option>
-              <option value="1920">Até 1920 px</option>
-              <option value="1280">Até 1280 px</option>
-              <option value="800">Até 800 px</option>
+              <option value="original">
+                {ptBR.outputSettings.resOriginal}
+              </option>
+              <option value="1920">{ptBR.outputSettings.imgMax1920}</option>
+              <option value="1280">{ptBR.outputSettings.imgMax1280}</option>
+              <option value="800">{ptBR.outputSettings.imgMax800}</option>
             </select>
           </div>
 
           {showFormat && (
             <div>
-              <label className="stamp block text-paint-dim">Formato</label>
+              <label className="stamp block text-paint-dim">
+                {ptBR.outputSettings.formatLabel}
+              </label>
               <select
                 value={imageFormat}
                 onChange={(event) =>
@@ -132,21 +104,18 @@ export function ImageOutputSettings({
                 }
                 className={selectClass}
               >
-                <option value="jpeg">JPEG (mais compatível)</option>
-                <option value="webp">WebP (arquivo menor)</option>
-                <option value="png">PNG (sem perda)</option>
-                <option value="bmp">BMP (sem compressão)</option>
-                <option value="tiff">TIFF (impressão)</option>
+                <option value="jpeg">{ptBR.outputSettings.fmtJpeg}</option>
+                <option value="webp">{ptBR.outputSettings.fmtWebp}</option>
+                <option value="png">{ptBR.outputSettings.fmtPng}</option>
+                <option value="bmp">{ptBR.outputSettings.fmtBmp}</option>
+                <option value="tiff">{ptBR.outputSettings.fmtTiff}</option>
               </select>
             </div>
           )}
 
           {lossless && (
             <div className="sm:col-span-2">
-              <FieldHint>
-                PNG, BMP e TIFF não perdem qualidade. O arquivo pode ficar maior
-                que o original, principalmente se a foto já era JPEG.
-              </FieldHint>
+              <FieldHint>{ptBR.outputSettings.losslessHint}</FieldHint>
             </div>
           )}
         </div>

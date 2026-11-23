@@ -1,11 +1,8 @@
-import { FolderOpen, RotateCcw, X } from "lucide-react";
-
-import { JobRow, RowAction } from "./JobRow";
-import { BOARD_STATUS } from "../lib/boardStatus";
+import { ptBR } from "../i18n/pt-BR";
 import { IMAGE_PRESETS } from "../lib/imagePresets";
 import { PRESETS, fileNameFromPath } from "../lib/presets";
-import { revealPath } from "../lib/tauri";
 import type { Job } from "../types/job";
+import { JobCardBase } from "./JobCardBase";
 
 interface JobCardProps {
   job: Job;
@@ -15,15 +12,13 @@ interface JobCardProps {
 }
 
 export function JobCard({ job, line, onCancel, onRetry }: JobCardProps) {
-  const canCancel = job.status === "queued" || job.status === "running";
-  const canRetry = job.status === "failed" || job.status === "cancelled";
   const preset =
     PRESETS.find((item) => item.id === job.options.preset_id) ??
     IMAGE_PRESETS.find((item) => item.id === job.options.preset_id);
 
   const resolutionLabel =
     !job.options.resolution || job.options.resolution === "original"
-      ? "tamanho original"
+      ? ptBR.common.originalSize
       : job.options.resolution;
 
   const target =
@@ -42,36 +37,18 @@ export function JobCard({ job, line, onCancel, onRetry }: JobCardProps) {
     .join(" · ");
 
   return (
-    <JobRow
+    <JobCardBase
+      id={job.id}
       line={line}
       title={fileNameFromPath(job.input_path)}
       detail={detail}
-      status={BOARD_STATUS[job.status]}
+      jobStatus={job.status}
       progress={job.progress}
       speed={job.speed ?? null}
       error={job.error}
-      actions={
-        <>
-          {canCancel && (
-            <RowAction danger onClick={() => onCancel(job.id)}>
-              <X size={12} />
-              Cancelar
-            </RowAction>
-          )}
-          {canRetry && (
-            <RowAction onClick={() => onRetry(job.id)}>
-              <RotateCcw size={12} />
-              De novo
-            </RowAction>
-          )}
-          {job.status === "completed" && (
-            <RowAction onClick={() => void revealPath(job.output_path)}>
-              <FolderOpen size={12} />
-              Abrir pasta
-            </RowAction>
-          )}
-        </>
-      }
+      revealTarget={job.output_path}
+      onCancel={onCancel}
+      onRetry={onRetry}
     />
   );
 }

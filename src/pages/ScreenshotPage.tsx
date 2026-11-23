@@ -1,33 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, Copy, FolderOpen, Trash2 } from "lucide-react";
+import { Check, Copy, Trash2 } from "lucide-react";
 
 import { BoardHeader } from "../components/BoardHeader";
 import { BoardWait } from "../components/BoardWait";
 import { FieldHint } from "../components/FieldHint";
+import { SectionRule } from "../components/SectionRule";
+import { OutputDirField } from "../components/settings/OutputDirField";
+import { formatErrorMessage } from "../hooks/createJobQueueStore";
 import { useScreenshotHistory } from "../hooks/useScreenshotHistory";
 import { useScreenshotSettings } from "../hooks/useScreenshotSettings";
 import { useToast } from "../hooks/useToast";
+import { ptBR } from "../i18n/pt-BR";
+import { pickOutputDirectory, revealPath } from "../lib/api/files";
 import {
   copyScreenshot,
-  printFileName,
   saveScreenshot,
   screenshotSrc,
-} from "../lib/screenshot";
-import { pickOutputDirectory, revealPath } from "../lib/tauri";
+} from "../lib/api/screenshot";
+import { printFileName } from "../lib/screenshot";
 import type { ScreenshotHistoryItem } from "../types/screenshot";
 
 interface ScreenshotPageProps {
   onBack: () => void;
-}
-
-function SectionRule({ step, title }: { step: string; title: string }) {
-  return (
-    <div className="mb-2 flex items-center gap-2.5">
-      <span className="cell text-xs text-paint-faint">{step}</span>
-      <h2 className="stamp text-paint-dim">{title}</h2>
-      <span aria-hidden className="h-px flex-1 bg-rule" />
-    </div>
-  );
 }
 
 function formatWhen(createdAt: number) {
@@ -61,9 +55,7 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
   );
 
   useEffect(() => {
-    void hydrate().catch((err) =>
-      setError(err instanceof Error ? err.message : String(err)),
-    );
+    void hydrate().catch((err) => setError(formatErrorMessage(err)));
     void hydrateSettings();
   }, [hydrate, hydrateSettings]);
 
@@ -80,9 +72,9 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
     try {
       await copyScreenshot(item.path);
       setCopied(true);
-      showToast("Imagem copiada para a área de transferência");
+      showToast(ptBR.screenshot.toastCopied);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(formatErrorMessage(err));
     }
   }
 
@@ -100,7 +92,7 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
       const path = await saveScreenshot(item.path, destDir, printFileName());
       setSavedPath(path);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(formatErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -115,7 +107,7 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
       setConfirmDelete(false);
       if (selectedId === item.id) setSelectedId(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(formatErrorMessage(err));
     }
   }
 
@@ -127,59 +119,48 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
   return (
     <main className="board-shutter relative flex h-full min-h-0 flex-col bg-void text-paint">
       <BoardHeader
-        title="Print screen"
-        detail="A tecla Print Screen abre o overlay. Os prints ficam nesta lista."
+        title={ptBR.screenshot.title}
+        detail={ptBR.screenshot.detail}
         onBack={onBack}
       />
 
       {error && (
         <p className="shrink-0 border-b border-rule bg-flap px-4 py-2 text-sm text-fault">
-          <span className="stamp mr-2 text-fault">Falha</span>
+          <span className="stamp mr-2 text-fault">
+            {ptBR.common.errorStamp}
+          </span>
           {error}
         </p>
       )}
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         <section className="mb-6">
-          <SectionRule step="01" title="Como tirar o print" />
+          <SectionRule step="01" title={ptBR.screenshot.stepHow} />
           <p className="max-w-xl text-sm leading-6 text-paint-dim">
-            Pressione <span className="cell text-paint">Print Screen</span> em
-            qualquer lugar. No overlay, anote se quiser e copie ou salve. Cada
-            print entra nesta lista.
+            {ptBR.screenshot.howPart1}{" "}
+            <span className="cell text-paint">{ptBR.screenshot.howKey}</span>{" "}
+            {ptBR.screenshot.howPart2}
           </p>
-          <FieldHint>
-            Copiar e salvar no overlay não apaga o histórico. O arquivo fica no
-            app para reabrir depois.
-          </FieldHint>
+          <FieldHint>{ptBR.screenshot.howHint}</FieldHint>
         </section>
 
         <section className="mb-6">
-          <SectionRule step="02" title="Pasta de destino" />
+          <SectionRule step="02" title={ptBR.screenshot.stepDir} />
           <div className="max-w-xl">
-            <div className="mt-1.5 flex gap-2">
-              <p className="cell min-w-0 flex-1 truncate border border-steel-dim bg-flap px-2.5 py-1.5 text-xs text-paint-dim">
-                {outputDir || "Pasta de imagens do Windows"}
-              </p>
-              <button
-                type="button"
-                onClick={() => void handlePickFolder()}
-                className="stamp ink inline-flex shrink-0 items-center gap-1.5 border border-steel-dim px-2.5 py-1.5 text-paint-dim hover:border-lamp hover:text-lamp"
-              >
-                <FolderOpen size={13} />
-                Escolher
-              </button>
-            </div>
-            <FieldHint>
-              Salvar no overlay e nesta página envia o arquivo para esta pasta.
-            </FieldHint>
+            <OutputDirField
+              value={outputDir}
+              placeholder={ptBR.screenshot.windowsPicturesDir}
+              onPick={() => void handlePickFolder()}
+            />
+            <FieldHint>{ptBR.screenshot.dirHint}</FieldHint>
           </div>
         </section>
 
         <section>
-          <SectionRule step="03" title="Prints feitos" />
+          <SectionRule step="03" title={ptBR.screenshot.stepHistory} />
           {items.length === 0 ? (
             <p className="text-sm text-paint-dim">
-              Nenhum print ainda. Use Print Screen para capturar.
+              {ptBR.screenshot.emptyHistory}
             </p>
           ) : (
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
@@ -214,7 +195,7 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
                 <div className="w-full shrink-0 border border-rule bg-flap p-3 lg:w-88">
                   <img
                     src={screenshotSrc(selected.path)}
-                    alt="Print selecionado"
+                    alt={ptBR.screenshot.selectedAlt}
                     className="mx-auto max-h-64 w-full object-contain"
                   />
                   <p className="cell mt-2 text-xs text-paint-faint">
@@ -228,7 +209,7 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
                       className="stamp inline-flex items-center gap-2 border border-steel-dim px-3 py-1.5 text-paint-dim hover:border-lamp hover:text-lamp"
                     >
                       {copied ? <Check size={14} /> : <Copy size={14} />}
-                      {copied ? "Copiado" : "Copiar"}
+                      {copied ? ptBR.common.copied : ptBR.common.copy}
                     </button>
                     <button
                       type="button"
@@ -236,8 +217,10 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
                       onClick={() => void handleSave(selected)}
                       className="stamp inline-flex items-center gap-2 border border-lamp bg-lamp px-3 py-1.5 text-void disabled:opacity-50"
                     >
-                      {saving ? <BoardWait compact label="Salvando" /> : null}
-                      {saving ? "Salvando" : "Salvar"}
+                      {saving ? (
+                        <BoardWait compact label={ptBR.common.saving} />
+                      ) : null}
+                      {saving ? ptBR.common.saving : ptBR.common.save}
                     </button>
                     {savedPath && (
                       <button
@@ -245,7 +228,7 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
                         onClick={() => void revealPath(savedPath)}
                         className="stamp border border-steel-dim px-3 py-1.5 text-cleared hover:border-lamp"
                       >
-                        Abrir pasta
+                        {ptBR.common.openFolder}
                       </button>
                     )}
                     <button
@@ -254,7 +237,7 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
                       className="stamp inline-flex items-center gap-2 border border-steel-dim px-3 py-1.5 text-paint-dim hover:border-fault hover:text-fault"
                     >
                       <Trash2 size={14} />
-                      Apagar
+                      {ptBR.common.delete}
                     </button>
                   </div>
                 </div>
@@ -273,10 +256,10 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
             className="w-full max-w-md border border-rule bg-flap p-4"
           >
             <h2 id="delete-print-title" className="stamp text-paint">
-              Apagar print
+              {ptBR.screenshot.deleteDialogTitle}
             </h2>
             <p className="mt-3 text-sm leading-6 text-paint-dim">
-              Este print sai da lista e não dá para desfazer. Quer apagar mesmo?
+              {ptBR.screenshot.deleteDialogBody}
             </p>
             <div className="mt-4 flex flex-wrap justify-end gap-2">
               <button
@@ -284,7 +267,7 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
                 onClick={() => setConfirmDelete(false)}
                 className="stamp border border-steel-dim px-3 py-1.5 text-paint-dim hover:border-lamp hover:text-lamp"
               >
-                Cancelar
+                {ptBR.common.cancel}
               </button>
               <button
                 type="button"
@@ -292,7 +275,7 @@ export function ScreenshotPage({ onBack }: ScreenshotPageProps) {
                 className="stamp inline-flex items-center gap-2 border border-fault bg-fault px-3 py-1.5 !text-paint"
               >
                 <Trash2 size={14} />
-                Apagar
+                {ptBR.common.delete}
               </button>
             </div>
           </div>

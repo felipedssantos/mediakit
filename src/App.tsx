@@ -5,8 +5,12 @@ import { Toast } from "./components/Toast";
 import { useScreenshotHistory } from "./hooks/useScreenshotHistory";
 import { useScreenshotSettings } from "./hooks/useScreenshotSettings";
 import { useToast } from "./hooks/useToast";
+import { ptBR } from "./i18n/pt-BR";
+import {
+  beginRegionCapture,
+  onScreenshotCaptured,
+} from "./lib/api/screenshot";
 import { SCREENSHOT_ENABLED } from "./lib/features";
-import { beginRegionCapture, onScreenshotCaptured } from "./lib/screenshot";
 import { ImageConverterPage } from "./pages/ImageConverterPage";
 import { ConverterPage } from "./pages/ConverterPage";
 import { HomePage } from "./pages/HomePage";
@@ -40,7 +44,7 @@ export default function App() {
     void onScreenshotCaptured((capture) => {
       prepend(capture);
       if (capture.action === "copy") {
-        showToast("Imagem copiada para a área de transferência");
+        showToast(ptBR.screenshot.toastCopied);
       }
     }).then((fn) => {
       unlisten = fn;

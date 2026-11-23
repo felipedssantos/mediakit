@@ -3,7 +3,7 @@ import { create } from "zustand";
 import {
   deleteScreenshotHistory,
   listScreenshotHistory,
-} from "../lib/screenshot";
+} from "../lib/api/screenshot";
 import type { ScreenshotHistoryItem } from "../types/screenshot";
 
 interface ScreenshotHistoryState {

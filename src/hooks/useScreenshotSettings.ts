@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import { defaultPictureDir } from "../lib/screenshot";
+import { defaultPictureDir } from "../lib/api/screenshot";
 
 const STORAGE_KEY = "conversor-screenshot-output-dir";
 
