@@ -1,8 +1,10 @@
 [package]
 name = "conversor"
 version = "0.1.0"
-description = "App desktop de compressão e conversão de vídeo"
-authors = ["you"]
+description = "Windows desktop app for local video/image compression, conversion, and media downloads"
+authors = ["Felipe Dumont"]
+license = "MIT"
+repository = "https://github.com/felipedssantos/conversor"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

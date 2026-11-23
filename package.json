@@ -2,6 +2,14 @@
   "name": "conversor",
   "private": true,
   "version": "0.1.0",
+  "description": "Windows desktop app for local video/image conversion and media downloads",
+  "author": "Felipe Dumont",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/felipedssantos/conversor.git"
+  },
+  "packageManager": "npm@11.19.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
