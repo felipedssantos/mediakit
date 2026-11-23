@@ -40,10 +40,10 @@
       }
     ],
     "security": {
-      "csp": null,
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' asset: http://asset.localhost https: data: blob:; connect-src 'self' ipc: http://ipc.localhost; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
       "assetProtocol": {
         "enable": true,
-          "scope": ["$TEMP/**", "$APPLOCALDATA/**", "$APPDATA/**"]
+        "scope": ["$TEMP/conversor-screenshots/**", "$APPLOCALDATA/screenshots/**"]
       }
     }
   },
