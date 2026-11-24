@@ -108,11 +108,11 @@ fn config_base_dir() -> Option<PathBuf> {
         if let Some(xdg) = env_dir("XDG_CONFIG_HOME") {
             return Some(xdg);
         }
-        return env_dir("HOME").map(|h| h.join(".config"));
+        env_dir("HOME").map(|h| h.join(".config"))
     }
     #[cfg(target_os = "macos")]
     {
-        return env_dir("HOME").map(|h| h.join("Library").join("Application Support"));
+        env_dir("HOME").map(|h| h.join("Library").join("Application Support"))
     }
     #[cfg(not(any(target_os = "linux", target_os = "macos")))]
     {
