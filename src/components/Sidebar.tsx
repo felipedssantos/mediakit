@@ -308,7 +308,7 @@ export function Sidebar({
                 </span>
               </span>
               <span className="mono-num text-[10px] font-medium text-ink-3">
-                v0.1 Beta
+                v{__APP_VERSION__} Beta
               </span>
             </div>
 
