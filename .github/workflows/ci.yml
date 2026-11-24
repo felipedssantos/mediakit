@@ -71,3 +71,72 @@ jobs:
       - name: Run Rust unit tests
         working-directory: src-tauri
         run: cargo test
+
+  linux-checks:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            clang \
+            libayatana-appindicator3-dev \
+            libclang-dev \
+            libdbus-1-dev \
+            libdrm-dev \
+            libgbm-dev \
+            libpipewire-0.3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libwebkit2gtk-4.1-dev \
+            libxcb1-dev \
+            libxdo-dev \
+            libxrandr-dev \
+            pkg-config
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install JS dependencies and build frontend
+        run: npm ci && npm run build
+
+      - name: Create placeholder Linux sidecar binaries for tauri_build
+        run: |
+          mkdir -p src-tauri/binaries
+          for name in \
+            ffmpeg-x86_64-unknown-linux-gnu \
+            ffprobe-x86_64-unknown-linux-gnu \
+            yt-dlp-x86_64-unknown-linux-gnu; do
+            touch "src-tauri/binaries/$name"
+            chmod +x "src-tauri/binaries/$name"
+          done
+
+      - name: Check Rust formatting
+        working-directory: src-tauri
+        run: cargo fmt --check
+
+      - name: Run Clippy
+        working-directory: src-tauri
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Run Rust unit tests
+        working-directory: src-tauri
+        run: cargo test

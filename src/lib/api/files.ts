@@ -36,12 +36,16 @@ export async function pickOutputDirectory(): Promise<string | null> {
   return selected;
 }
 
-/** Opens a file picker dialog filtered to Windows executables (.exe). */
+/** Opens a file picker dialog for selecting a media executable. */
 export async function pickExecutableFile(): Promise<string | null> {
+  const isWindows =
+    typeof navigator !== "undefined" && /windows/i.test(navigator.userAgent);
   const selected = await open({
     directory: false,
     multiple: false,
-    filters: [{ name: "Executável", extensions: ["exe"] }],
+    ...(isWindows
+      ? { filters: [{ name: "Executável", extensions: ["exe"] }] }
+      : {}),
   });
   if (!selected || Array.isArray(selected)) return null;
   return selected;
