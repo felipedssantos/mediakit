@@ -14,12 +14,29 @@
       <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License" />
     </a>
     <img src="https://img.shields.io/badge/platform-Windows%2010%2F11%20%7C%20Linux%20x64-0078D6" alt="Windows 10/11 | Linux x64" />
+    <a href="https://www.producthunt.com/products/mediakit-2">
+      <img src="https://img.shields.io/badge/Product%20Hunt-Review%20Us-DA552F?logo=producthunt&amp;logoColor=white" alt="Product Hunt - Review MediaKit" />
+    </a>
+  </p>
+
+  <p>
+    <a href="https://www.producthunt.com/products/mediakit-2?utm_source=badge-review" target="_blank">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://api.producthunt.com/widgets/embed-image/v1/review.svg?post_id=mediakit-2&amp;theme=dark" />
+        <img src="https://api.producthunt.com/widgets/embed-image/v1/review.svg?post_id=mediakit-2&amp;theme=light" alt="MediaKit - Review on Product Hunt" width="250" height="54" />
+      </picture>
+    </a>
+  </p>
+
+  <p>
+    Enjoying MediaKit? Please <strong><a href="https://www.producthunt.com/products/mediakit-2">leave a review on Product Hunt</a></strong> to help support the project!
   </p>
 
   <p>
     <a href="#installation">Download</a> ·
     <a href="#features">Features</a> ·
     <a href="#build-from-source">Build from Source</a> ·
+    <a href="#support--feedback">Feedback</a> ·
     <a href="#contributing">Contributing</a>
   </p>
 </div>
@@ -213,7 +230,7 @@ docker run --rm -v "${PWD}:/src:ro" -v "${PWD}/dist-linux:/out" -v "${PWD}/scrip
 | `npm run typecheck`       | Runs TypeScript type checking (`tsc --noEmit`)                          |
 | `npm test`                | Runs frontend unit tests with Vitest                                    |
 | `npm run tauri dev`       | Starts full desktop app (frontend + Rust backend)                       |
-| `npm run tauri build`     | Builds OS installers (NSIS on Windows; `.deb` & `.AppImage` on Linux)  |
+| `npm run tauri build`     | Builds OS installers (NSIS on Windows; `.deb` & `.AppImage` on Linux)   |
 | `npm run ffmpeg:download` | Downloads `ffmpeg` and `ffprobe` into `src-tauri/binaries/`             |
 | `npm run ytdlp:download`  | Downloads `yt-dlp` into `src-tauri/binaries/`                           |
 
@@ -264,6 +281,12 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the end-to-end job flow and
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for release history and notable changes.
+
+## Support & Feedback
+
+If you find MediaKit helpful, please consider **[leaving a review on Product Hunt](https://www.producthunt.com/products/mediakit-2)** — your rating and feedback help support the project!
+
+For bug reports, feature requests, or questions, please open an [issue on GitHub](https://github.com/felipedssantos/mediakit/issues).
 
 ## Contributing
 
