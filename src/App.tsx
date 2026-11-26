@@ -12,10 +12,7 @@ import { useThemeSync } from "./hooks/useTheme";
 import { useToast } from "./hooks/useToast";
 import { useYoutubeJobEvents, useYoutubeJobs } from "./hooks/useYoutubeJobs";
 import { getT, useT } from "./hooks/useLocale";
-import {
-  beginRegionCapture,
-  onScreenshotCaptured,
-} from "./lib/api/screenshot";
+import { beginRegionCapture, onScreenshotCaptured } from "./lib/api/screenshot";
 import { SCREENSHOT_ENABLED } from "./lib/features";
 import {
   isImageCompressPreset,
@@ -42,9 +39,7 @@ const isSnipOverlay =
   new URLSearchParams(window.location.search).has("snip");
 
 function isActiveStatus(status: string) {
-  return (
-    status === "queued" || status === "running" || status === "finalizing"
-  );
+  return status === "queued" || status === "running" || status === "finalizing";
 }
 
 export default function App() {
@@ -117,7 +112,14 @@ export default function App() {
       unlisten = fn;
     });
     function onKey(event: KeyboardEvent) {
-      if (event.key !== "PrintScreen") return;
+      const isPrintKey = event.key === "PrintScreen";
+      const isAltShiftS =
+        event.altKey &&
+        event.shiftKey &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        event.key.toLowerCase() === "s";
+      if (!isPrintKey && !isAltShiftS) return;
       event.preventDefault();
       void beginRegionCapture();
     }

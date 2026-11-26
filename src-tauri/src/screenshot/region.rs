@@ -7,11 +7,9 @@ use tauri::{
 };
 
 use crate::error::{AppError, AppResult};
-use crate::screenshot::capture::{capture_all_monitors, MonitorShot};
+use crate::screenshot::capture::{capture_all_monitors, sorted_monitors, MonitorShot};
 use crate::screenshot::windows::{collect_windows, cursor_pos};
-use crate::screenshot::{
-    RegionSession, RegionSessionDto, ScreenshotCapture, ScreenshotState, ScreenshotWindowInfo,
-};
+use crate::screenshot::{RegionSession, RegionSessionDto, ScreenshotState};
 
 pub const OVERLAY_LABEL: &str = "snip-overlay";
 
@@ -93,16 +91,35 @@ fn ensure_overlay_window(app: &AppHandle, label: &str) -> AppResult<WebviewWindo
     create_overlay_window(app, label)
 }
 
-fn main_is_visible(app: &AppHandle) -> bool {
+fn main_needs_hide(app: &AppHandle) -> bool {
     app.get_webview_window("main")
-        .and_then(|window| window.is_visible().ok())
+        .map(|window| {
+            window.is_visible().unwrap_or(false) && !window.is_minimized().unwrap_or(false)
+        })
         .unwrap_or(false)
+}
+
+#[cfg(windows)]
+fn wait_compositor_frame() {
+    #[link(name = "dwmapi")]
+    unsafe extern "system" {
+        fn DwmFlush() -> i32;
+    }
+    unsafe {
+        let _ = DwmFlush();
+    }
+}
+
+#[cfg(not(windows))]
+fn wait_compositor_frame() {
+    std::thread::sleep(std::time::Duration::from_millis(30));
 }
 
 fn session_to_dto(session: &RegionSession) -> RegionSessionDto {
     RegionSessionDto {
+        session_id: session.session_id,
         overlay_label: session.overlay_label.clone(),
-        path: session.source_path.clone(),
+        path: format!("{}_{}", session.session_id, session.overlay_label),
         width: session.width,
         height: session.height,
         monitor_x: session.monitor_x,
@@ -125,27 +142,6 @@ pub fn show_session_overlays(app: &AppHandle) {
     }
 }
 
-pub fn restore_after_overlay(app: &AppHandle) {
-    hide_overlays(app);
-    let restore = app
-        .state::<ScreenshotState>()
-        .restore_main
-        .load(Ordering::SeqCst);
-    if restore {
-        show_main(app);
-    }
-}
-
-pub fn complete_capture(
-    app: &AppHandle,
-    capture: ScreenshotCapture,
-) -> AppResult<ScreenshotCapture> {
-    app.state::<ScreenshotState>().region.lock().clear();
-    restore_after_overlay(app);
-    let _ = app.emit("screenshot-captured", &capture);
-    Ok(capture)
-}
-
 fn session_dto_for(
     region: &HashMap<String, RegionSession>,
     label: &str,
@@ -156,15 +152,29 @@ fn session_dto_for(
         .ok_or(AppError::NotFound("Nenhuma seleção de área em andamento"))
 }
 
+/// Pre-warms one hidden overlay WebView per connected monitor so Print Screen opens instantly.
 pub fn ensure_overlay(app: &AppHandle) -> AppResult<()> {
-    ensure_overlay_window(app, OVERLAY_LABEL).map(|_| ())
+    let Ok(monitors) = sorted_monitors() else {
+        return ensure_overlay_window(app, OVERLAY_LABEL).map(|_| ());
+    };
+    for (index, monitor) in monitors.into_iter().enumerate() {
+        let id = monitor.id().unwrap_or(index as u32);
+        let label = overlay_label_for(index, id);
+        let overlay = ensure_overlay_window(app, &label)?;
+        if let (Ok(x), Ok(y), Ok(w), Ok(h)) =
+            (monitor.x(), monitor.y(), monitor.width(), monitor.height())
+        {
+            let _ = overlay.set_position(Position::Physical(PhysicalPosition::new(x, y)));
+            let _ = overlay.set_size(Size::Physical(PhysicalSize::new(w, h)));
+        }
+    }
+    Ok(())
 }
 
 fn show_monitor_overlays(
     app: &AppHandle,
     shots: &[MonitorShot],
     dtos: &HashMap<String, RegionSessionDto>,
-    windows: &[ScreenshotWindowInfo],
 ) -> AppResult<()> {
     let used: Vec<String> = shots
         .iter()
@@ -179,13 +189,16 @@ fn show_monitor_overlays(
 
     for shot in shots {
         let overlay = ensure_overlay_window(app, &shot.overlay_label)?;
-        let _ = overlay.set_position(Position::Physical(PhysicalPosition::new(shot.x, shot.y)));
-        let _ = overlay.set_size(Size::Physical(PhysicalSize::new(shot.width, shot.height)));
+        let pos = Position::Physical(PhysicalPosition::new(shot.x, shot.y));
+        let size = Size::Physical(PhysicalSize::new(shot.width, shot.height));
+        let _ = overlay.set_position(pos);
+        let _ = overlay.set_size(size);
         let _ = overlay.set_always_on_top(true);
         let _ = overlay.show();
+        // Re-apply physical size after show so cross-monitor DPI changes do not clamp bounds.
+        let _ = overlay.set_size(size);
         if let Some(dto) = dtos.get(&shot.overlay_label) {
             let _ = overlay.emit("snip-session-ready", dto);
-            let _ = overlay.emit("snip-windows-ready", windows);
         }
     }
 
@@ -222,64 +235,89 @@ pub async fn start_snip_overlay(app: AppHandle) -> AppResult<RegionSessionDto> {
 }
 
 async fn open_snip_overlay(app: AppHandle) -> AppResult<RegionSessionDto> {
+    let should_hide = main_needs_hide(&app);
     app.state::<ScreenshotState>()
         .restore_main
-        .store(main_is_visible(&app), Ordering::SeqCst);
+        .store(should_hide, Ordering::SeqCst);
+
+    if should_hide {
+        let app_hide = app.clone();
+        let _ = app.run_on_main_thread(move || {
+            let _ = hide_main(&app_hide);
+        });
+        let _ = tauri::async_runtime::spawn_blocking(wait_compositor_frame).await;
+    }
 
     let windows_task = tauri::async_runtime::spawn_blocking(collect_windows);
-
     let shots = tauri::async_runtime::spawn_blocking(capture_all_monitors)
         .await
         .map_err(|err| AppError::message(err.to_string()))??;
 
-    let windows = windows_task
-        .await
-        .map_err(|err| AppError::message(err.to_string()))
-        .unwrap_or_default();
+    let session_id = app
+        .state::<ScreenshotState>()
+        .next_session_id
+        .fetch_add(1, Ordering::SeqCst);
 
-    let (first_dto, dtos) = {
+    let (first_dto, dtos, labels) = {
         let state = app.state::<ScreenshotState>();
         let mut region = state.region.lock();
         region.clear();
         let mut dtos = HashMap::new();
+        let mut labels = Vec::with_capacity(shots.len());
         for shot in &shots {
             let session = RegionSession {
+                session_id,
                 overlay_label: shot.overlay_label.clone(),
-                source_path: shot.capture.path.clone(),
                 image: shot.image.clone(),
-                width: shot.capture.width,
-                height: shot.capture.height,
+                width: shot.image.width(),
+                height: shot.image.height(),
                 monitor_x: shot.x,
                 monitor_y: shot.y,
-                windows: windows.clone(),
+                windows: Vec::new(),
             };
             let dto = session_to_dto(&session);
             dtos.insert(shot.overlay_label.clone(), dto);
+            labels.push(shot.overlay_label.clone());
             region.insert(shot.overlay_label.clone(), session);
         }
         let first = shots
             .first()
             .and_then(|shot| dtos.get(&shot.overlay_label).cloned())
             .ok_or(AppError::NotFound("Nenhum monitor encontrado"))?;
-        (first, dtos)
+        (first, dtos, labels)
     };
 
     let app_ui = app.clone();
     let shots_ui = shots;
     let dtos_ui = dtos;
-    let windows_ui = windows;
     let (tx, rx) = std::sync::mpsc::channel();
     app.run_on_main_thread(move || {
-        let result = show_monitor_overlays(&app_ui, &shots_ui, &dtos_ui, &windows_ui);
+        let result = show_monitor_overlays(&app_ui, &shots_ui, &dtos_ui);
         let _ = tx.send(result);
     })
     .map_err(|e| AppError::message(e.to_string()))?;
     rx.recv()
         .map_err(|_| AppError::message("Não foi possível abrir o overlay de print"))??;
 
-    if main_is_visible(&app) {
-        hide_main(&app)?;
-    }
+    // Deliver window bounds asynchronously so slow/hung processes never delay overlay opening.
+    let app_windows = app.clone();
+    tauri::async_runtime::spawn(async move {
+        let windows = windows_task.await.unwrap_or_default();
+        {
+            let state = app_windows.state::<ScreenshotState>();
+            let mut region = state.region.lock();
+            for session in region.values_mut() {
+                if session.session_id == session_id {
+                    session.windows = windows.clone();
+                }
+            }
+        }
+        for label in labels {
+            if let Some(overlay) = app_windows.get_webview_window(&label) {
+                let _ = overlay.emit("snip-windows-ready", &windows);
+            }
+        }
+    });
 
     Ok(first_dto)
 }

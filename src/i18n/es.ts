@@ -21,7 +21,8 @@ export const es: Translations = {
     clearAll: "Limpiar lista",
     recommended: "Recomendado",
     advancedOptions: "Opciones avanzadas",
-    advancedHint: "Ajusta formato técnico, resolución y velocidad si hace falta.",
+    advancedHint:
+      "Ajusta formato técnico, resolución y velocidad si hace falta.",
     originalSize: "tamaño original",
     sameAsInputDir: "Misma carpeta del archivo original",
     outputDirLabel: "Dónde guardar",
@@ -93,10 +94,10 @@ export const es: Translations = {
     featureBatchTitle: "Varios a la vez",
     featureBatchDetail: "Arrastra una carpeta o lote entero a la cola.",
     featureSafeTitle: "Originales intactos",
-    featureSafeDetail:
-      "Siempre creamos una copia nueva sin borrar tu archivo.",
+    featureSafeDetail: "Siempre creamos una copia nueva sin borrar tu archivo.",
     featureLimitsTitle: "Sin límites",
-    featureLimitsDetail: "Sin marca de agua, sin registro y sin límite de tamaño.",
+    featureLimitsDetail:
+      "Sin marca de agua, sin registro y sin límite de tamaño.",
     tools: [
       {
         id: "video_compress" as const,
@@ -144,7 +145,8 @@ export const es: Translations = {
   },
   dropZone: {
     defaultTitle: "Arrastra tus vídeos aquí",
-    defaultHint: "O haz clic aquí para elegir uno o varios archivos de tu equipo.",
+    defaultHint:
+      "O haz clic aquí para elegir uno o varios archivos de tu equipo.",
     probingTitle: "Leyendo información de los archivos...",
     probingHint: "Comprobando duración, resolución y tamaño de cada vídeo.",
   },
@@ -155,7 +157,8 @@ export const es: Translations = {
     stepStart: "Iniciar",
     compressTitle: "Comprimir vídeo",
     convertTitle: "Convertir vídeo",
-    compressDetail: "Elige los vídeos, define el objetivo y haz clic en iniciar",
+    compressDetail:
+      "Elige los vídeos, define el objetivo y haz clic en iniciar",
     convertDetail: "Cambia el formato del archivo o extrae solo el sonido",
     stepChooseFiles: "Elige los vídeos",
     dropTitle: "Arrastra tus vídeos aquí",
@@ -221,8 +224,7 @@ export const es: Translations = {
     codecLabel: "Estándar de vídeo (códec)",
     formatLabel: "Formato final",
     nvidiaLabel: "Acelerar con tarjeta gráfica (GPU)",
-    nvidiaUnsupportedFormat:
-      "Este formato no usa aceleración por GPU.",
+    nvidiaUnsupportedFormat: "Este formato no usa aceleración por GPU.",
     nvidiaPresetLocked:
       "Esta opción ya usa la tarjeta gráfica automáticamente.",
     nvidiaAvailable: "Convierte más rápido usando la tarjeta gráfica.",
@@ -289,7 +291,8 @@ export const es: Translations = {
     audioM4a: "M4A (buena calidad)",
     audioMp3: "MP3 (abre en cualquier lugar)",
     windowsVideosDir: "Carpeta Vídeos del sistema",
-    batchDirHint: "Todos los archivos de esta cola se guardarán en esta carpeta.",
+    batchDirHint:
+      "Todos los archivos de esta cola se guardarán en esta carpeta.",
     downloadSingle: "Descargar vídeo",
     downloadMany: (count: number) => `Descargar ${count} vídeos`,
     downloadHint:
@@ -318,7 +321,8 @@ export const es: Translations = {
       "Copiar y guardar en el overlay no borra el historial. El archivo queda en la app para reabrirlo después.",
     stepDir: "Carpeta de destino",
     windowsPicturesDir: "Carpeta Imágenes del sistema",
-    dirHint: "Guardar en el overlay y en esta página envía el archivo a esta carpeta.",
+    dirHint:
+      "Guardar en el overlay y en esta página envía el archivo a esta carpeta.",
     stepHistory: "Capturas hechas",
     emptyHistory: "Aún no hay capturas. Usa Print Screen para capturar.",
     selectedAlt: "Captura seleccionada",
@@ -326,24 +330,20 @@ export const es: Translations = {
     deleteDialogBody:
       "Esta captura saldrá de la lista y no se puede deshacer. ¿Seguro que quieres eliminarla?",
     toastCopied: "Imagen copiada al portapapeles",
+    captureNow: "Capturar ahora",
   },
   snip: {
-    toolFullscreen: "Pantalla",
-    toolWindow: "Ventana",
-    toolRegion: "Área",
+    toolFullscreen: "Pantalla completa",
+    toolSelect: "Ajustar",
+    toolPen: "Lápiz",
     toolArrow: "Flecha",
     toolRect: "Rectángulo",
+    toolEllipse: "Elipse",
     toolText: "Texto",
-    hintText: "Haz clic para escribir · Enter confirma",
-    hintArrow: "Arrastra para la flecha",
-    hintRect: "Arrastra para el rectángulo",
-    hintWindowFallback: "Pasa el ratón y haz clic en la ventana",
-    hintRegion: "Arrastra para seleccionar el área",
-    hintFullscreen: "Haz clic para capturar toda la pantalla",
-    footerAnnotate: " · Copiar o Guardar confirma · Ctrl+Z deshace",
-    footerCopy: " · copia al instante",
-    footerSave: " · guarda en la carpeta",
-    footerEscape: " · Esc cancela",
+    toolPixelate: "Mosaico",
+    toolReselect: "Nueva selección",
+    hintSelecting:
+      "Pasa el ratón por ventana o borde · Clic para editar · Arrastra para área libre · Esc cancela",
   },
   settings: {
     title: "Configuración",
@@ -393,7 +393,8 @@ export const es: Translations = {
   presets: {
     compress_web: {
       label: "Comprimir para enviar",
-      description: "Hace el archivo mucho menor con una ligera pérdida de calidad.",
+      description:
+        "Hace el archivo mucho menor con una ligera pérdida de calidad.",
       bestFor: "Ideal para WhatsApp, correo y subida rápida",
     },
     compress_quality: {
@@ -456,8 +457,7 @@ export const es: Translations = {
     },
     img_convert_webp: {
       label: "Convertir a WebP",
-      description:
-        "Cambia el formato a WebP, menor que JPEG a igual calidad.",
+      description: "Cambia el formato a WebP, menor que JPEG a igual calidad.",
       bestFor: "Ideal para web, app y envío cuando el destino acepta WebP",
     },
   },
@@ -487,8 +487,7 @@ export const es: Translations = {
     sourceCustom: "Externo",
     sourceMissing: "No disponible",
     customDirLabel: "Carpeta externa de binarios",
-    customDirHint:
-      "Carpeta con ffmpeg, ffprobe y yt-dlp (opcional).",
+    customDirHint: "Carpeta con ffmpeg, ffprobe y yt-dlp (opcional).",
     customDirPlaceholder: "Usando binarios predeterminados",
     pickFolder: "Elegir carpeta",
     pickExe: "Elegir binario",
