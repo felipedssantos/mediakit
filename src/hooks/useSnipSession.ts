@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { pickOutputDirectory } from "../lib/api/files";
 import {
@@ -7,52 +7,80 @@ import {
   getRegionSession,
   onSnipSessionReady,
   onSnipWindowsReady,
-  screenshotSrc,
+  snipFrameSrc,
 } from "../lib/api/screenshot";
 import { getCurrentWindowLabel } from "../lib/api/window";
 import { printFileName } from "../lib/screenshot";
 import {
+  DEFAULT_ANNOTATE_COLOR,
   nextShapeId,
   rasterizeAnnotatedPng,
   type AnnotShape,
+  type AnnotateTool,
 } from "../lib/snipAnnotate";
-import type { Point, Rect } from "../lib/snipGeometry";
-import type { RegionSession, ScreenshotWindowInfo } from "../types/screenshot";
+import type { Rect } from "../lib/snipGeometry";
+import type { RegionSession } from "../types/screenshot";
 import { formatErrorMessage } from "./createJobQueueStore";
+import { useLocale } from "./useLocale";
 import { useScreenshotSettings } from "./useScreenshotSettings";
+import { useTheme } from "./useTheme";
 
 export interface DraftText {
   x: number;
   y: number;
+  color: string;
   value: string;
 }
 
+export type SnipPhase = "selecting" | "editing";
+
 const overlayLabel = getCurrentWindowLabel();
+
+const TOOL_HOTKEYS: Record<string, AnnotateTool> = {
+  "1": "select",
+  "2": "pen",
+  "3": "arrow",
+  "4": "rect",
+  "5": "ellipse",
+  "6": "text",
+  "7": "pixelate",
+};
 
 export function useSnipSession(onSessionReset: () => void) {
   const [session, setSession] = useState<RegionSession | null>(null);
   const [src, setSrc] = useState<string | null>(null);
-  const [action, setAction] = useState<"copy" | "save">("copy");
+  const [phase, setPhase] = useState<SnipPhase>("selecting");
+  const [selection, setSelection] = useState<Rect | null>(null);
+  const [tool, setTool] = useState<AnnotateTool>("select");
+  const [color, setColor] = useState<string>(DEFAULT_ANNOTATE_COLOR);
+  const [shapes, setShapes] = useState<AnnotShape[]>([]);
+  const [draftText, setDraftText] = useState<DraftText | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [committing, setCommitting] = useState(false);
+
   const outputDir = useScreenshotSettings((state) => state.outputDir);
   const setOutputDir = useScreenshotSettings((state) => state.setOutputDir);
   const hydrateSettings = useScreenshotSettings((state) => state.hydrate);
-  const [error, setError] = useState<string | null>(null);
-  const [shapes, setShapes] = useState<AnnotShape[]>([]);
-  const [draftText, setDraftText] = useState<DraftText | null>(null);
-  const [hovered, setHovered] = useState<ScreenshotWindowInfo | null>(null);
-  const [origin, setOrigin] = useState<Point | null>(null);
-  const [current, setCurrent] = useState<Point | null>(null);
 
-  const finished = useRef(false);
+  const finishedRef = useRef(false);
+  const lastSessionIdRef = useRef<number | null>(null);
   const shapesRef = useRef(shapes);
   const draftTextRef = useRef(draftText);
+  const selectionRef = useRef(selection);
+  const phaseRef = useRef(phase);
+  const sessionRef = useRef(session);
+  const srcRef = useRef(src);
   const resetRef = useRef(onSessionReset);
 
   useEffect(() => {
     shapesRef.current = shapes;
     draftTextRef.current = draftText;
+    selectionRef.current = selection;
+    phaseRef.current = phase;
+    sessionRef.current = session;
+    srcRef.current = src;
     resetRef.current = onSessionReset;
-  }, [shapes, draftText, onSessionReset]);
+  }, [shapes, draftText, selection, phase, session, src, onSessionReset]);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,16 +89,21 @@ export function useSnipSession(onSessionReset: () => void) {
 
     function applySession(next: RegionSession) {
       if (next.overlay_label && next.overlay_label !== overlayLabel) return;
-      finished.current = false;
+      if (lastSessionIdRef.current === next.session_id) return;
+      lastSessionIdRef.current = next.session_id;
+      useTheme.getState().syncFromStorage();
+      useLocale.getState().syncFromStorage();
+      finishedRef.current = false;
+      setCommitting(false);
       setError(null);
-      setHovered(null);
-      setOrigin(null);
-      setCurrent(null);
+      setPhase("selecting");
+      setSelection(null);
+      setTool("select");
       setShapes([]);
       setDraftText(null);
       resetRef.current();
       setSession(next);
-      setSrc(screenshotSrc(next.path));
+      setSrc(snipFrameSrc(next.path));
     }
 
     function loadSession() {
@@ -111,107 +144,180 @@ export function useSnipSession(onSessionReset: () => void) {
     };
   }, [hydrateSettings]);
 
-  async function handleCancel() {
-    if (finished.current) return;
-    finished.current = true;
+  const handleCancel = useCallback(async () => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
     try {
       await cancelRegionCapture();
     } catch {
-      finished.current = false;
+      finishedRef.current = false;
     }
-  }
-
-  useEffect(() => {
-    function onKey(event: KeyboardEvent) {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
-        if (draftTextRef.current) return;
-        event.preventDefault();
-        setShapes((currentShapes) => currentShapes.slice(0, -1));
-        return;
-      }
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      if (draftTextRef.current) {
-        setDraftText(null);
-        return;
-      }
-      void handleCancel();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  function confirmDraftText() {
+  const confirmDraftText = useCallback((): AnnotShape[] => {
     const draft = draftTextRef.current;
-    if (!draft) return;
+    if (!draft) return shapesRef.current;
     const text = draft.value.trim();
     setDraftText(null);
-    if (!text) return;
-    setShapes((currentShapes) => [
-      ...currentShapes,
-      { id: nextShapeId(), kind: "text", x: draft.x, y: draft.y, text },
-    ]);
-  }
+    draftTextRef.current = null;
+    if (!text) return shapesRef.current;
+    const added: AnnotShape = {
+      id: nextShapeId(),
+      kind: "text",
+      color: draft.color,
+      x: draft.x,
+      y: draft.y,
+      text,
+    };
+    const next = [...shapesRef.current, added];
+    shapesRef.current = next;
+    setShapes(next);
+    return next;
+  }, []);
 
-  async function commit(crop?: Rect, nextAction: "copy" | "save" = action) {
-    if (!session || !src || finished.current) return;
-    let destDir = outputDir;
-    if (nextAction === "save") {
-      if (!destDir) {
+  const resetToSelect = useCallback(() => {
+    setDraftText(null);
+    setShapes([]);
+    setSelection(null);
+    setTool("select");
+    setPhase("selecting");
+    setError(null);
+    resetRef.current();
+  }, []);
+
+  const undo = useCallback(() => {
+    setShapes((current) => current.slice(0, -1));
+  }, []);
+
+  const commit = useCallback(
+    async (action: "copy" | "save") => {
+      const activeSession = sessionRef.current;
+      const activeSrc = srcRef.current;
+      if (!activeSession || !activeSrc || finishedRef.current) return;
+
+      const allShapes = confirmDraftText();
+      const crop = selectionRef.current ?? {
+        x: 0,
+        y: 0,
+        width: activeSession.width,
+        height: activeSession.height,
+      };
+
+      let destDir = outputDir;
+      if (action === "save" && !destDir) {
         const directory = await pickOutputDirectory();
         if (!directory) return;
         destDir = directory;
         setOutputDir(directory);
       }
+
+      finishedRef.current = true;
+      setCommitting(true);
+      setError(null);
+      try {
+        const png =
+          allShapes.length > 0
+            ? await rasterizeAnnotatedPng(
+                activeSrc,
+                activeSession.width,
+                activeSession.height,
+                allShapes,
+                crop,
+              )
+            : undefined;
+        await commitSnipCapture({
+          action,
+          x: png ? undefined : Math.round(crop.x),
+          y: png ? undefined : Math.round(crop.y),
+          width: png ? undefined : Math.round(crop.width),
+          height: png ? undefined : Math.round(crop.height),
+          destDir,
+          fileName: printFileName(),
+          png,
+        });
+      } catch (err) {
+        finishedRef.current = false;
+        setCommitting(false);
+        setError(formatErrorMessage(err));
+      }
+    },
+    [confirmDraftText, outputDir, setOutputDir],
+  );
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (draftTextRef.current) {
+          setDraftText(null);
+          return;
+        }
+        void handleCancel();
+        return;
+      }
+
+      if (draftTextRef.current) return;
+
+      const mod = event.ctrlKey || event.metaKey;
+      const key = event.key.toLowerCase();
+
+      if (mod && key === "z") {
+        event.preventDefault();
+        undo();
+        return;
+      }
+
+      if (phaseRef.current !== "editing") return;
+
+      if (event.key === "Enter" || (mod && key === "c")) {
+        event.preventDefault();
+        void commit("copy");
+        return;
+      }
+
+      if (mod && key === "s") {
+        event.preventDefault();
+        void commit("save");
+        return;
+      }
+
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        resetToSelect();
+        return;
+      }
+
+      if (!mod && !event.altKey && !event.shiftKey && TOOL_HOTKEYS[event.key]) {
+        event.preventDefault();
+        setTool(TOOL_HOTKEYS[event.key]);
+      }
     }
-    finished.current = true;
-    setError(null);
-    try {
-      const currentShapes = shapesRef.current;
-      const png =
-        currentShapes.length > 0
-          ? await rasterizeAnnotatedPng(
-              src,
-              session.width,
-              session.height,
-              currentShapes,
-              crop,
-            )
-          : undefined;
-      await commitSnipCapture({
-        action: nextAction,
-        x: png ? undefined : crop?.x,
-        y: png ? undefined : crop?.y,
-        width: png ? undefined : crop?.width,
-        height: png ? undefined : crop?.height,
-        destDir,
-        fileName: printFileName(),
-        png,
-      });
-    } catch (err) {
-      finished.current = false;
-      setError(formatErrorMessage(err));
-    }
-  }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [commit, handleCancel, resetToSelect, undo]);
 
   return {
     session,
     src,
-    action,
-    setAction,
-    error,
+    phase,
+    setPhase,
+    selection,
+    setSelection,
+    tool,
+    setTool,
+    color,
+    setColor,
     shapes,
     setShapes,
     draftText,
     setDraftText,
-    hovered,
-    setHovered,
-    origin,
-    setOrigin,
-    current,
-    setCurrent,
+    error,
+    committing,
     handleCancel,
     confirmDraftText,
+    resetToSelect,
+    undo,
     commit,
   };
 }

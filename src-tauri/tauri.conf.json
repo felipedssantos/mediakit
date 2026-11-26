@@ -40,10 +40,10 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' asset: http://asset.localhost https: data: blob:; connect-src 'self' ipc: http://ipc.localhost; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' asset: http://asset.localhost snip: http://snip.localhost https: data: blob:; connect-src 'self' ipc: http://ipc.localhost; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
       "assetProtocol": {
         "enable": true,
-        "scope": ["$TEMP/mediakit-screenshots/**", "$APPLOCALDATA/screenshots/**"]
+        "scope": ["$APPLOCALDATA/screenshots/**"]
       }
     }
   },
@@ -57,10 +57,6 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": [
-      "binaries/ffmpeg",
-      "binaries/ffprobe",
-      "binaries/yt-dlp"
-    ]
+    "externalBin": ["binaries/ffmpeg", "binaries/ffprobe", "binaries/yt-dlp"]
   }
 }

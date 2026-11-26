@@ -1,13 +1,3 @@
-export interface ScreenshotMonitor {
-  id: number;
-  name: string;
-  width: number;
-  height: number;
-  x: number;
-  y: number;
-  primary: boolean;
-}
-
 export interface ScreenshotWindowInfo {
   id: number;
   title: string;
@@ -18,13 +8,8 @@ export interface ScreenshotWindowInfo {
   y: number;
 }
 
-export interface ScreenshotCapture {
-  path: string;
-  width: number;
-  height: number;
-}
-
 export interface RegionSession {
+  session_id: number;
   overlay_label: string;
   path: string;
   width: number;

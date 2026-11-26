@@ -32,8 +32,7 @@ export const ptPT: Translations = {
     concurrencyLabel: "Ficheiros ao mesmo tempo",
     stepAdjustments: "Onde guardar e qualidade",
     removeItem: (name: string) => `Remover ${name}`,
-    filesCount: (count: number) =>
-      `${count} ficheiro${count === 1 ? "" : "s"}`,
+    filesCount: (count: number) => `${count} ficheiro${count === 1 ? "" : "s"}`,
   },
   theme: {
     lightLabel: "Modo claro",
@@ -292,8 +291,7 @@ export const ptPT: Translations = {
     audioM4a: "M4A (boa qualidade)",
     audioMp3: "MP3 (abre em qualquer lado)",
     windowsVideosDir: "Pasta Vídeos do sistema",
-    batchDirHint:
-      "Todos os ficheiros desta fila serão guardados nesta pasta.",
+    batchDirHint: "Todos os ficheiros desta fila serão guardados nesta pasta.",
     downloadSingle: "Transferir vídeo",
     downloadMany: (count: number) => `Transferir ${count} vídeos`,
     downloadHint:
@@ -326,31 +324,26 @@ export const ptPT: Translations = {
     dirHint:
       "Guardar na sobreposição e nesta página envia o ficheiro para esta pasta.",
     stepHistory: "Capturas feitas",
-    emptyHistory:
-      "Ainda não há capturas. Use Print Screen para capturar.",
+    emptyHistory: "Ainda não há capturas. Use Print Screen para capturar.",
     selectedAlt: "Captura selecionada",
     deleteDialogTitle: "Eliminar captura",
     deleteDialogBody:
       "Esta captura sai da lista e não dá para desfazer. Pretende eliminar mesmo?",
     toastCopied: "Imagem copiada para a área de transferência",
+    captureNow: "Capturar agora",
   },
   snip: {
-    toolFullscreen: "Ecrã",
-    toolWindow: "Janela",
-    toolRegion: "Área",
+    toolFullscreen: "Ecrã inteiro",
+    toolSelect: "Ajustar",
+    toolPen: "Caneta",
     toolArrow: "Seta",
     toolRect: "Retângulo",
+    toolEllipse: "Elipse",
     toolText: "Texto",
-    hintText: "Clique para escrever · Enter confirma",
-    hintArrow: "Arraste para a seta",
-    hintRect: "Arraste para o retângulo",
-    hintWindowFallback: "Passe o rato e clique na janela",
-    hintRegion: "Arraste para selecionar a área",
-    hintFullscreen: "Clique para capturar o ecrã inteiro",
-    footerAnnotate: " · Copiar ou Guardar confirma · Ctrl+Z desfaz",
-    footerCopy: " · copia na hora",
-    footerSave: " · guarda na pasta",
-    footerEscape: " · Esc cancela",
+    toolPixelate: "Mosaico",
+    toolReselect: "Nova seleção",
+    hintSelecting:
+      "Passe o rato numa janela ou borda · Clique para editar · Arraste para área livre · Esc cancela",
   },
   settings: {
     title: "Definições",
@@ -406,7 +399,8 @@ export const ptPT: Translations = {
     },
     compress_quality: {
       label: "Comprimir com qualidade",
-      description: "Reduz bastante o tamanho quase sem perder qualidade visual.",
+      description:
+        "Reduz bastante o tamanho quase sem perder qualidade visual.",
       bestFor: "Bom para guardar vídeos importantes a ocupar pouco espaço",
     },
     convert_mp4: {
@@ -422,13 +416,16 @@ export const ptPT: Translations = {
     },
     gpu_nvenc: {
       label: "Comprimir com GPU (rápido)",
-      description: "Usa a placa gráfica (GPU) para converter muito mais depressa.",
+      description:
+        "Usa a placa gráfica (GPU) para converter muito mais depressa.",
       bestFor: "Bom quando tem muitos vídeos e pressa",
     },
   },
   videoFormats: {
     mp4: { bestFor: "O mais compatível com telemóvel, WhatsApp e leitores" },
-    mkv: { bestFor: "Bom para guardar o ficheiro, aceita quase qualquer codec" },
+    mkv: {
+      bestFor: "Bom para guardar o ficheiro, aceita quase qualquer codec",
+    },
     mov: { bestFor: "Bom para QuickTime, Final Cut e equipamentos Apple" },
     webm: { bestFor: "Bom para sites e navegadores" },
     avi: { bestFor: "Bom quando um programa antigo pede AVI" },
@@ -494,8 +491,7 @@ export const ptPT: Translations = {
     sourceCustom: "Externo",
     sourceMissing: "Indisponível",
     customDirLabel: "Pasta externa de binários",
-    customDirHint:
-      "Pasta com ffmpeg, ffprobe e yt-dlp (opcional).",
+    customDirHint: "Pasta com ffmpeg, ffprobe e yt-dlp (opcional).",
     customDirPlaceholder: "A usar binários padrão da app",
     pickFolder: "Escolher pasta",
     pickExe: "Escolher binário",

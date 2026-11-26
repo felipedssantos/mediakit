@@ -1,4 +1,4 @@
-import { Check, Copy, Loader2, Trash2 } from "lucide-react";
+import { Camera, Check, Copy, Loader2, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { ErrorBanner } from "../components/ErrorBanner";
@@ -12,6 +12,7 @@ import { useScreenshotSettings } from "../hooks/useScreenshotSettings";
 import { useToast } from "../hooks/useToast";
 import { pickOutputDirectory, revealPath } from "../lib/api/files";
 import {
+  beginRegionCapture,
   copyScreenshot,
   saveScreenshot,
   screenshotSrc,
@@ -115,11 +116,25 @@ export function ScreenshotPage() {
 
   return (
     <main className="ui-enter relative flex h-full min-h-0 flex-col bg-canvas text-ink">
-      <header className="shrink-0 border-b border-line bg-surface px-6 py-4">
-        <h1 className="text-xl font-bold tracking-tight text-ink">
-          {t.screenshot.title}
-        </h1>
-        <p className="mt-0.5 text-sm text-ink-2">{t.screenshot.detail}</p>
+      <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-6 py-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink">
+            {t.screenshot.title}
+          </h1>
+          <p className="mt-0.5 text-sm text-ink-2">{t.screenshot.detail}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() =>
+            void beginRegionCapture().catch((err) =>
+              setError(formatErrorMessage(err)),
+            )
+          }
+          className="ui-btn inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-accent-ink hover:bg-accent-hover"
+        >
+          <Camera size={14} />
+          {t.screenshot.captureNow}
+        </button>
       </header>
 
       <ErrorBanner message={error} />
@@ -132,6 +147,10 @@ export function ScreenshotPage() {
               {t.screenshot.howPart1}{" "}
               <kbd className="mono-num rounded-md border border-line-strong bg-elevated px-2 py-0.5 text-xs font-semibold text-ink">
                 {t.screenshot.howKey}
+              </kbd>{" "}
+              <span className="text-ink-3">/</span>{" "}
+              <kbd className="mono-num rounded-md border border-line-strong bg-elevated px-2 py-0.5 text-xs font-semibold text-ink">
+                Alt+Shift+S
               </kbd>{" "}
               {t.screenshot.howPart2}
             </p>
