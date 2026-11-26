@@ -38,6 +38,10 @@ const isSnipOverlay =
   window.__MEDIAKIT_SNIP__ === true ||
   new URLSearchParams(window.location.search).has("snip");
 
+if (isSnipOverlay) {
+  document.documentElement.dataset.snip = "true";
+}
+
 function isActiveStatus(status: string) {
   return status === "queued" || status === "running" || status === "finalizing";
 }

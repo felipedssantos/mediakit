@@ -22,7 +22,7 @@ flowchart LR
 - **`src/lib/api/`**: Sole boundary importing `@tauri-apps/*`. Split by domain:
   - `jobs.ts` — media probing, conversion/compression queue commands and events (`jobs-changed`, `job-progress`).
   - `youtube.ts` — URL probing, yt-dlp download queue commands and events (`yt-jobs-changed`).
-  - `screenshot.ts` — experimental capture/overlay commands, events, and `asset:` URL conversion.
+  - `screenshot.ts` — screenshot capture/overlay commands, events, `snip:` frame URLs, and `asset:` URL conversion.
   - `files.ts` — native file/folder pickers and Explorer reveal.
   - `window.ts` — window controls (`TitleBar`) and webview drag-and-drop listeners.
 - **`src/hooks/`**:
@@ -43,10 +43,10 @@ flowchart LR
 - **`youtube/`**: `probe.rs` (yt-dlp JSON probing), `cookies.rs` (managed `CookieCache` state), `download.rs` (yt-dlp streaming worker with `JobStatus::Finalizing` during mux/audio post-processing), and `manager.rs`.
 - **`desktop.rs`**: System tray icon, single-instance focus restoration, close-to-tray lifecycle, and Windows autostart handling.
 
-## Experimental Features
+## Feature Flags
 
 - **`SCREENSHOT_ENABLED`** (`src/lib/features.ts` and `src-tauri/src/features.rs`):
-  Currently set to `false` by default. When disabled, the Print Screen global shortcut, tray menu item, and Home screen entry remain hidden while the underlying `src-tauri/src/screenshot/` modules (`capture`, `clipboard`, `commands`, `region`, `windows`) stay compiled and ready to re-enable.
+  Set to `true` by default. Enables the `Print Screen` and `Alt+Shift+S` global shortcuts, tray menu entry, Screenshot page, and `snip-overlay` window backed by `src-tauri/src/screenshot/` (`capture`, `clipboard`, `commands`, `region`, `windows`) and the `snip://` custom URI scheme protocol.
 
 ## Security Boundaries
 

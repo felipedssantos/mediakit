@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { RegionSession } from "../types/screenshot";
 import {
   clampRect,
+  constrainSquarePoint,
   detectHoverTarget,
   isNearMonitorEdge,
   normalizeRect,
@@ -48,6 +49,22 @@ describe("snipGeometry", () => {
       width: 200,
       height: 150,
     });
+  });
+
+  it("constrains drag endpoint to a 1:1 square in all quadrants", () => {
+    expect(
+      normalizeRect(
+        { x: 100, y: 100 },
+        constrainSquarePoint({ x: 100, y: 100 }, { x: 180, y: 130 }),
+      ),
+    ).toEqual({ x: 100, y: 100, width: 80, height: 80 });
+
+    expect(
+      normalizeRect(
+        { x: 100, y: 100 },
+        constrainSquarePoint({ x: 100, y: 100 }, { x: 40, y: 20 }),
+      ),
+    ).toEqual({ x: 20, y: 20, width: 80, height: 80 });
   });
 
   it("maps client coordinates using viewport bounds (HiDPI-safe)", () => {

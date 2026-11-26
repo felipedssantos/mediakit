@@ -72,6 +72,19 @@ export function useSnipSession(onSessionReset: () => void) {
   const srcRef = useRef(src);
   const resetRef = useRef(onSessionReset);
 
+  const clearSessionState = useCallback(() => {
+    setCommitting(false);
+    setError(null);
+    setPhase("selecting");
+    setSelection(null);
+    setTool("select");
+    setShapes([]);
+    setDraftText(null);
+    setSession(null);
+    setSrc(null);
+    resetRef.current();
+  }, []);
+
   useEffect(() => {
     shapesRef.current = shapes;
     draftTextRef.current = draftText;
@@ -107,7 +120,10 @@ export function useSnipSession(onSessionReset: () => void) {
     }
 
     function loadSession() {
-      if (document.visibilityState !== "visible") return;
+      if (document.visibilityState !== "visible") {
+        clearSessionState();
+        return;
+      }
       void getRegionSession()
         .then((next) => {
           if (cancelled) return;
@@ -142,17 +158,18 @@ export function useSnipSession(onSessionReset: () => void) {
       unlistenSession?.();
       unlistenWindows?.();
     };
-  }, [hydrateSettings]);
+  }, [clearSessionState, hydrateSettings]);
 
   const handleCancel = useCallback(async () => {
     if (finishedRef.current) return;
     finishedRef.current = true;
     try {
       await cancelRegionCapture();
+      clearSessionState();
     } catch {
       finishedRef.current = false;
     }
-  }, []);
+  }, [clearSessionState]);
 
   const confirmDraftText = useCallback((): AnnotShape[] => {
     const draft = draftTextRef.current;
@@ -235,13 +252,14 @@ export function useSnipSession(onSessionReset: () => void) {
           fileName: printFileName(),
           png,
         });
+        clearSessionState();
       } catch (err) {
         finishedRef.current = false;
         setCommitting(false);
         setError(formatErrorMessage(err));
       }
     },
-    [confirmDraftText, outputDir, setOutputDir],
+    [clearSessionState, confirmDraftText, outputDir, setOutputDir],
   );
 
   useEffect(() => {

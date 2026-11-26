@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, type RefObject } from "react";
 
 import type { DraftText } from "../../hooks/useSnipSession";
 import {
-  arrowHeadPoints,
+  arrowGeometry,
   fontSizeFor,
   penSvgPath,
   pixelateBlockSize,
@@ -61,6 +61,39 @@ function PixelateBox({
         imageRendering: "pixelated",
       }}
     />
+  );
+}
+
+function SvgArrow({
+  x1,
+  y1,
+  x2,
+  y2,
+  color,
+  stroke,
+}: {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  color: string;
+  stroke: number;
+}) {
+  const geom = arrowGeometry(x1, y1, x2, y2, stroke);
+  if (!geom) return null;
+  return (
+    <g>
+      <line
+        x1={x1}
+        y1={y1}
+        x2={geom.shaftEnd.x}
+        y2={geom.shaftEnd.y}
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+      />
+      <polygon points={geom.headPoints} fill={color} />
+    </g>
   );
 }
 
@@ -189,29 +222,16 @@ export function SnipAnnotationsLayer({
               );
             }
             if (shape.kind === "arrow") {
-              const head = Math.max(14, stroke * 4);
               return (
-                <g key={shape.id}>
-                  <line
-                    x1={shape.x1}
-                    y1={shape.y1}
-                    x2={shape.x2}
-                    y2={shape.y2}
-                    stroke={shape.color}
-                    strokeWidth={stroke}
-                    strokeLinecap="round"
-                  />
-                  <polygon
-                    points={arrowHeadPoints(
-                      shape.x1,
-                      shape.y1,
-                      shape.x2,
-                      shape.y2,
-                      head,
-                    )}
-                    fill={shape.color}
-                  />
-                </g>
+                <SvgArrow
+                  key={shape.id}
+                  x1={shape.x1}
+                  y1={shape.y1}
+                  x2={shape.x2}
+                  y2={shape.y2}
+                  color={shape.color}
+                  stroke={stroke}
+                />
               );
             }
             if (shape.kind === "rect") {
@@ -242,11 +262,16 @@ export function SnipAnnotationsLayer({
                 />
               );
             }
+            const canDragText = tool === "text" || tool === "select";
             return (
               <text
                 key={shape.id}
                 x={shape.x}
                 y={shape.y + fontSize}
+                data-snip-shape-id={shape.id}
+                className={
+                  canDragText ? "pointer-events-auto cursor-move" : undefined
+                }
                 fill={shape.color}
                 stroke="#0e0e0e"
                 strokeWidth={Math.max(2, stroke * 0.35)}
@@ -272,27 +297,14 @@ export function SnipAnnotationsLayer({
           )}
 
           {tool === "arrow" && drawOrigin && drawCurrent && (
-            <g>
-              <line
-                x1={drawOrigin.x}
-                y1={drawOrigin.y}
-                x2={drawCurrent.x}
-                y2={drawCurrent.y}
-                stroke={color}
-                strokeWidth={stroke}
-                strokeLinecap="round"
-              />
-              <polygon
-                points={arrowHeadPoints(
-                  drawOrigin.x,
-                  drawOrigin.y,
-                  drawCurrent.x,
-                  drawCurrent.y,
-                  Math.max(14, stroke * 4),
-                )}
-                fill={color}
-              />
-            </g>
+            <SvgArrow
+              x1={drawOrigin.x}
+              y1={drawOrigin.y}
+              x2={drawCurrent.x}
+              y2={drawCurrent.y}
+              color={color}
+              stroke={stroke}
+            />
           )}
 
           {tool === "rect" && drawRect && (
@@ -323,6 +335,7 @@ export function SnipAnnotationsLayer({
         {draftText && (
           <input
             ref={textInputRef}
+            autoFocus
             data-snip-text
             value={draftText.value}
             onChange={(event) => onDraftChange(event.target.value)}

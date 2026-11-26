@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-11-26
+
+### Added
+
+- Interactive screenshot & annotation overlay enabled by default (`SCREENSHOT_ENABLED = true`), triggered via `Print Screen`, `Alt+Shift+S`, the system tray menu, or the **Screenshot** page.
+- Full screen, hovered window, and free-drag region selection (`Esc` to cancel, `Backspace` to reselect).
+- Annotation toolbar with color swatches, **Adjust** (`1`), **Pen** (`2`), **Arrow** (`3`), **Rectangle** (`4`), **Ellipse** (`5`), **Text** (`6`), **Pixelate** mosaic obfuscation (`7`), and **Undo** (`Ctrl+Z`).
+- Direct clipboard copy (`Enter`), PNG save (`Ctrl+S`) to a configurable destination folder, and persistent capture history on the **Screenshot** page.
+
+### Fixed
+
+- Conditionally compiled Windows-only clipboard helpers for Linux CI compatibility.
+
 ## [0.2.0] - 2026-11-23
 
 ### Added
@@ -32,5 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Experimental screenshot & annotation overlay (`SCREENSHOT_ENABLED = false` by default).
 - Open-source repository setup: MIT license, contributing guidelines, code of conduct, security policy, CI workflow, ESLint/Prettier/Vitest, `rustfmt`/Clippy, pinned sidecar SHA-256 downloads, and architecture docs.
 
+[0.3.0]: https://github.com/felipedssantos/mediakit/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/felipedssantos/mediakit/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/felipedssantos/mediakit/releases/tag/v0.1.0

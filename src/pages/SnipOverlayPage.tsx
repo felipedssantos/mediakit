@@ -7,6 +7,7 @@ import { useSnipSession } from "../hooks/useSnipSession";
 import { isDrawTool, nextShapeId } from "../lib/snipAnnotate";
 import {
   clampRect,
+  constrainSquarePoint,
   detectHoverTarget,
   isNearMonitorEdge,
   normalizeRect,
@@ -103,6 +104,12 @@ export function SnipOverlayPage() {
   const [drawOrigin, setDrawOrigin] = useState<Point | null>(null);
   const [drawCurrent, setDrawCurrent] = useState<Point | null>(null);
   const [penPoints, setPenPoints] = useState<Point[]>([]);
+  const [dragTextState, setDragTextState] = useState<{
+    id: string;
+    startPoint: Point;
+    originX: number;
+    originY: number;
+  } | null>(null);
 
   const resetLocalInteractions = useCallback(() => {
     setHoverTarget(null);
@@ -114,6 +121,7 @@ export function SnipOverlayPage() {
     setDrawOrigin(null);
     setDrawCurrent(null);
     setPenPoints([]);
+    setDragTextState(null);
   }, []);
 
   const {
@@ -140,9 +148,12 @@ export function SnipOverlayPage() {
     commit,
   } = useSnipSession(resetLocalInteractions);
 
+  const isDraftOpen = Boolean(draftText);
   useEffect(() => {
-    if (draftText) textInputRef.current?.focus();
-  }, [draftText]);
+    if (!isDraftOpen) return;
+    const id = requestAnimationFrame(() => textInputRef.current?.focus());
+    return () => cancelAnimationFrame(id);
+  }, [isDraftOpen, draftText?.x, draftText?.y]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -247,6 +258,23 @@ export function SnipOverlayPage() {
       return;
     }
 
+    if (dragTextState) {
+      const dx = point.x - dragTextState.startPoint.x;
+      const dy = point.y - dragTextState.startPoint.y;
+      setShapes((prev) =>
+        prev.map((s) =>
+          s.id === dragTextState.id && s.kind === "text"
+            ? {
+                ...s,
+                x: dragTextState.originX + dx,
+                y: dragTextState.originY + dy,
+              }
+            : s,
+        ),
+      );
+      return;
+    }
+
     if (resizeState) {
       const dx = point.x - resizeState.startPoint.x;
       const dy = point.y - resizeState.startPoint.y;
@@ -264,6 +292,10 @@ export function SnipOverlayPage() {
     }
 
     if (tool === "pen" && penPoints.length > 0) {
+      if (event.shiftKey) {
+        setPenPoints((prev) => [prev[0], point]);
+        return;
+      }
       const last = penPoints[penPoints.length - 1];
       if (Math.hypot(point.x - last.x, point.y - last.y) >= 2) {
         setPenPoints((prev) => [...prev, point]);
@@ -272,7 +304,11 @@ export function SnipOverlayPage() {
     }
 
     if (drawOrigin && isDrawTool(tool)) {
-      setDrawCurrent(point);
+      const nextPoint =
+        event.shiftKey && (tool === "rect" || tool === "ellipse")
+          ? constrainSquarePoint(drawOrigin, point)
+          : point;
+      setDrawCurrent(nextPoint);
     }
   }
 
@@ -298,6 +334,28 @@ export function SnipOverlayPage() {
       return;
     }
 
+    if (phase === "editing" && (tool === "text" || tool === "select")) {
+      const textEl = target.closest<SVGTextElement>("[data-snip-shape-id]");
+      const dragShapeId = textEl?.dataset.snipShapeId;
+      if (dragShapeId) {
+        const shape = shapes.find(
+          (s): s is Extract<typeof s, { kind: "text" }> =>
+            s.id === dragShapeId && s.kind === "text",
+        );
+        if (shape) {
+          event.preventDefault();
+          confirmDraftText();
+          setDragTextState({
+            id: shape.id,
+            startPoint: point,
+            originX: shape.x,
+            originY: shape.y,
+          });
+          return;
+        }
+      }
+    }
+
     if (tool === "select" && selection) {
       const handleEl = target.closest<HTMLElement>("[data-snip-handle]");
       const handle =
@@ -319,6 +377,7 @@ export function SnipOverlayPage() {
     }
 
     if (tool === "text") {
+      event.preventDefault();
       confirmDraftText();
       setDraftText({ x: point.x, y: point.y, color, value: "" });
       return;
@@ -372,13 +431,20 @@ export function SnipOverlayPage() {
       return;
     }
 
+    if (dragTextState) {
+      setDragTextState(null);
+      return;
+    }
+
     if (resizeState) {
       setResizeState(null);
       return;
     }
 
     if (tool === "pen" && penPoints.length > 0) {
-      const finalPoints = [...penPoints, point];
+      const finalPoints = event.shiftKey
+        ? [penPoints[0], point]
+        : [...penPoints, point];
       setPenPoints([]);
       setShapes((prev) => [
         ...prev,
@@ -409,7 +475,12 @@ export function SnipOverlayPage() {
       return;
     }
 
-    const rect = normalizeRect(from, point);
+    const rect = normalizeRect(
+      from,
+      event.shiftKey && (tool === "rect" || tool === "ellipse")
+        ? constrainSquarePoint(from, point)
+        : point,
+    );
     if (rect.width < 4 || rect.height < 4) return;
     if (tool === "rect" || tool === "ellipse") {
       setShapes((prev) => [
@@ -448,7 +519,7 @@ export function SnipOverlayPage() {
   return (
     <div
       ref={containerRef}
-      className={`relative h-full w-full overflow-hidden bg-black select-none ${cursorClass}`}
+      className={`relative h-full w-full overflow-hidden bg-transparent select-none ${cursorClass}`}
       onContextMenu={(event) => {
         event.preventDefault();
         if (draftText) {
