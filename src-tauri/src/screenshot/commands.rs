@@ -1,158 +1,41 @@
 use std::fs;
 use std::path::Path;
 use std::sync::atomic::Ordering;
-use std::time::Duration;
 
 use base64::Engine;
-use image::GenericImageView;
+use serde::Deserialize;
+use tauri::ipc::{InvokeBody, Request};
 use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow};
 use uuid::Uuid;
-use xcap::{Monitor, Window};
 
 use crate::error::{AppError, AppResult};
 use crate::screenshot::capture::{
-    archive_screenshot, crop_rgba, prune_history, read_history_index, save_png, save_webp,
-    temp_png_path, write_history_index,
+    archive_screenshot, crop_rgba, prune_history, read_history_index, save_png, write_history_index,
 };
-use crate::screenshot::clipboard::{copy_dib_on_main, copy_rgba_on_main, rgba_to_dib};
+use crate::screenshot::clipboard::copy_rgba_on_main;
 use crate::screenshot::region::{
-    complete_capture, get_region_session_inner, hide_main, hide_overlays, show_main,
-    show_session_overlays, start_snip_overlay,
+    get_region_session_inner, hide_overlays, show_main, show_session_overlays, start_snip_overlay,
 };
-use crate::screenshot::windows::{collect_windows, find_monitor};
-use crate::screenshot::{
-    RegionSessionDto, ScreenshotCapture, ScreenshotHistoryItem, ScreenshotMonitorInfo,
-    ScreenshotState, ScreenshotWindowInfo,
-};
+use crate::screenshot::{RegionSessionDto, ScreenshotHistoryItem, ScreenshotState};
 
-#[tauri::command]
-pub fn list_screenshot_monitors() -> AppResult<Vec<ScreenshotMonitorInfo>> {
-    let mut monitors = Monitor::all()
-        .map_err(|e| AppError::message(e.to_string()))?
-        .into_iter()
-        .filter_map(|monitor| {
-            Some(ScreenshotMonitorInfo {
-                id: monitor.id().ok()?,
-                name: monitor
-                    .friendly_name()
-                    .or_else(|_| monitor.name())
-                    .unwrap_or_else(|_| "Monitor".into()),
-                width: monitor.width().ok()?,
-                height: monitor.height().ok()?,
-                x: monitor.x().unwrap_or(0),
-                y: monitor.y().unwrap_or(0),
-                primary: monitor.is_primary().unwrap_or(false),
-            })
-        })
-        .collect::<Vec<_>>();
-    monitors.sort_by(|a, b| b.primary.cmp(&a.primary).then(a.id.cmp(&b.id)));
-    Ok(monitors)
-}
-
-#[tauri::command]
-pub fn list_screenshot_windows() -> AppResult<Vec<ScreenshotWindowInfo>> {
-    Ok(collect_windows())
-}
-
-#[tauri::command]
-pub async fn capture_monitor(app: AppHandle, monitor_id: u32) -> AppResult<ScreenshotCapture> {
-    hide_main(&app)?;
-    let result = tauri::async_runtime::spawn_blocking(move || {
-        std::thread::sleep(Duration::from_millis(40));
-        let monitor = find_monitor(monitor_id)?;
-        let image = monitor
-            .capture_image()
-            .map_err(|e| AppError::message(e.to_string()))?;
-        save_webp(&image, &temp_png_path()?)
-    })
-    .await
-    .map_err(|err| AppError::message(err.to_string()))?;
-    show_main(&app);
-    result
-}
-
-#[tauri::command]
-pub async fn capture_window(window_id: u32) -> AppResult<ScreenshotCapture> {
-    tauri::async_runtime::spawn_blocking(move || {
-        let window = Window::all()
-            .map_err(|e| AppError::message(e.to_string()))?
-            .into_iter()
-            .find(|window| window.id().ok() == Some(window_id))
-            .ok_or(AppError::NotFound("Janela não encontrada"))?;
-        if window.is_minimized().unwrap_or(false) {
-            return Err(AppError::validation(
-                "Essa janela está minimizada e não pode ser capturada",
-            ));
-        }
-        let image = window
-            .capture_image()
-            .map_err(|e| AppError::message(e.to_string()))?;
-        save_webp(&image, &temp_png_path()?)
-    })
-    .await
-    .map_err(|err| AppError::message(err.to_string()))?
-}
-
-#[tauri::command]
-pub async fn begin_region_capture(app: AppHandle) -> AppResult<RegionSessionDto> {
-    start_snip_overlay(app).await
-}
-
-#[tauri::command]
-pub fn get_region_session(window: WebviewWindow, app: AppHandle) -> AppResult<RegionSessionDto> {
-    get_region_session_inner(&app, window.label())
-}
-
-#[allow(clippy::too_many_arguments)]
-#[tauri::command]
-pub async fn commit_snip_capture(
-    window: WebviewWindow,
-    app: AppHandle,
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AnnotatedMeta {
     action: String,
-    x: Option<u32>,
-    y: Option<u32>,
-    width: Option<u32>,
-    height: Option<u32>,
     dest_dir: Option<String>,
     file_name: Option<String>,
-    png_base64: Option<String>,
+}
+
+async fn finalize_snip_image(
+    app: &AppHandle,
+    action: String,
+    prepared: image::RgbaImage,
+    dest_dir: Option<String>,
+    file_name: Option<String>,
 ) -> AppResult<()> {
-    let annotated = png_base64.filter(|value| !value.trim().is_empty());
-    let prepared = {
-        let state = app.state::<ScreenshotState>();
-        let region = state.region.lock();
-        let session = region
-            .get(window.label())
-            .ok_or(AppError::NotFound("Nenhuma seleção de área em andamento"))?;
-        if annotated.is_some() {
-            None
-        } else if let (Some(x), Some(y), Some(width), Some(height)) = (x, y, width, height) {
-            Some(crop_rgba(&session.image, x, y, width, height)?)
-        } else {
-            Some(session.image.clone())
-        }
-    };
-
-    hide_overlays(&app);
-
     let app_archive = app.clone();
-    let prepared = tauri::async_runtime::spawn_blocking(move || {
-        if let Some(encoded) = annotated {
-            let bytes = base64::engine::general_purpose::STANDARD
-                .decode(encoded)
-                .map_err(|e| AppError::message(e.to_string()))?;
-            Ok(image::load_from_memory(&bytes)
-                .map_err(|e| AppError::message(e.to_string()))?
-                .to_rgba8())
-        } else {
-            prepared.ok_or(AppError::NotFound("Nenhuma seleção de área em andamento"))
-        }
-    })
-    .await
-    .map_err(|err| AppError::message(err.to_string()))??;
-
     let result = match action.as_str() {
-        "copy" => copy_rgba_on_main(&app, &prepared)
+        "copy" => copy_rgba_on_main(app, &prepared)
             .and_then(|_| archive_screenshot(&app_archive, &prepared, &action)),
         "save" => tauri::async_runtime::spawn_blocking(move || {
             let dest_dir = dest_dir.unwrap_or_default();
@@ -178,7 +61,7 @@ pub async fn commit_snip_capture(
     let item = match result {
         Ok(item) => item,
         Err(err) => {
-            show_session_overlays(&app);
+            show_session_overlays(app);
             return Err(err);
         }
     };
@@ -188,76 +71,95 @@ pub async fn commit_snip_capture(
         .restore_main
         .load(Ordering::SeqCst)
     {
-        show_main(&app);
+        show_main(app);
     }
     let _ = app.emit("screenshot-captured", &item);
     Ok(())
 }
 
 #[tauri::command]
-pub async fn crop_screenshot(
-    window: WebviewWindow,
-    app: AppHandle,
-    x: u32,
-    y: u32,
-    width: u32,
-    height: u32,
-) -> AppResult<ScreenshotCapture> {
-    let source_path = {
-        let state = app.state::<ScreenshotState>();
-        let region = state.region.lock();
-        region
-            .get(window.label())
-            .ok_or(AppError::NotFound("Nenhuma seleção de área em andamento"))?
-            .source_path
-            .clone()
-    };
-
-    let capture = tauri::async_runtime::spawn_blocking(move || {
-        let image = image::open(&source_path).map_err(|e| AppError::message(e.to_string()))?;
-        let (img_w, img_h) = image.dimensions();
-        if width == 0 || height == 0 {
-            return Err(AppError::validation("Selecione uma área maior"));
-        }
-        let x = x.min(img_w.saturating_sub(1));
-        let y = y.min(img_h.saturating_sub(1));
-        let width = width.min(img_w.saturating_sub(x)).max(1);
-        let height = height.min(img_h.saturating_sub(y)).max(1);
-        let cropped = image.crop_imm(x, y, width, height);
-        let out = temp_png_path()?;
-        cropped
-            .save(&out)
-            .map_err(|e| AppError::message(e.to_string()))?;
-        Ok(ScreenshotCapture {
-            path: out.to_string_lossy().into_owned(),
-            width: cropped.width(),
-            height: cropped.height(),
-        })
-    })
-    .await
-    .map_err(|err| AppError::message(err.to_string()))??;
-
-    complete_capture(&app, capture)
+pub async fn begin_region_capture(app: AppHandle) -> AppResult<RegionSessionDto> {
+    start_snip_overlay(app).await
 }
 
 #[tauri::command]
-pub fn finish_fullscreen_capture(
+pub fn get_region_session(window: WebviewWindow, app: AppHandle) -> AppResult<RegionSessionDto> {
+    get_region_session_inner(&app, window.label())
+}
+
+#[allow(clippy::too_many_arguments)]
+#[tauri::command]
+pub async fn commit_snip_capture(
     window: WebviewWindow,
     app: AppHandle,
-) -> AppResult<ScreenshotCapture> {
-    let capture = {
+    action: String,
+    x: Option<u32>,
+    y: Option<u32>,
+    width: Option<u32>,
+    height: Option<u32>,
+    dest_dir: Option<String>,
+    file_name: Option<String>,
+) -> AppResult<()> {
+    let prepared = {
         let state = app.state::<ScreenshotState>();
         let region = state.region.lock();
         let session = region
             .get(window.label())
             .ok_or(AppError::NotFound("Nenhuma seleção de área em andamento"))?;
-        ScreenshotCapture {
-            path: session.source_path.clone(),
-            width: session.width,
-            height: session.height,
+        if let (Some(x), Some(y), Some(width), Some(height)) = (x, y, width, height) {
+            crop_rgba(&session.image, x, y, width, height)?
+        } else {
+            session.image.clone()
         }
     };
-    complete_capture(&app, capture)
+
+    hide_overlays(&app);
+    finalize_snip_image(&app, action, prepared, dest_dir, file_name).await
+}
+
+#[tauri::command]
+pub async fn commit_snip_annotated(
+    window: WebviewWindow,
+    app: AppHandle,
+    request: Request<'_>,
+) -> AppResult<()> {
+    {
+        let state = app.state::<ScreenshotState>();
+        let region = state.region.lock();
+        if !region.contains_key(window.label()) {
+            return Err(AppError::NotFound("Nenhuma seleção de área em andamento"));
+        }
+    }
+
+    let meta_header = request
+        .headers()
+        .get("x-snip-meta")
+        .and_then(|value| value.to_str().ok())
+        .ok_or_else(|| AppError::validation("Metadados do print ausentes"))?;
+    let meta_bytes = base64::engine::general_purpose::STANDARD
+        .decode(meta_header)
+        .map_err(|e| AppError::message(e.to_string()))?;
+    let meta: AnnotatedMeta =
+        serde_json::from_slice(&meta_bytes).map_err(|e| AppError::message(e.to_string()))?;
+
+    let png_bytes = match request.body() {
+        InvokeBody::Raw(bytes) if !bytes.is_empty() => bytes.clone(),
+        _ => return Err(AppError::validation("Imagem anotada ausente")),
+    };
+
+    hide_overlays(&app);
+
+    let prepared = tauri::async_runtime::spawn_blocking(move || {
+        Ok::<_, AppError>(
+            image::load_from_memory(&png_bytes)
+                .map_err(|e| AppError::message(e.to_string()))?
+                .to_rgba8(),
+        )
+    })
+    .await
+    .map_err(|err| AppError::message(err.to_string()))??;
+
+    finalize_snip_image(&app, meta.action, prepared, meta.dest_dir, meta.file_name).await
 }
 
 #[tauri::command]
@@ -273,15 +175,16 @@ pub fn cancel_region_capture(app: AppHandle, state: State<'_, ScreenshotState>) 
 
 #[tauri::command]
 pub async fn copy_screenshot(app: AppHandle, path: String) -> AppResult<()> {
-    let dib = tauri::async_runtime::spawn_blocking(move || {
-        let image = image::open(&path)
-            .map_err(|e| AppError::message(e.to_string()))?
-            .to_rgba8();
-        Ok::<_, AppError>(rgba_to_dib(&image))
+    let image = tauri::async_runtime::spawn_blocking(move || {
+        Ok::<_, AppError>(
+            image::open(&path)
+                .map_err(|e| AppError::message(e.to_string()))?
+                .to_rgba8(),
+        )
     })
     .await
     .map_err(|err| AppError::message(err.to_string()))??;
-    copy_dib_on_main(&app, dib)
+    copy_rgba_on_main(&app, &image)
 }
 
 #[tauri::command]

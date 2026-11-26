@@ -29,12 +29,13 @@ function applyLocale(locale: Locale) {
 interface LocaleStore {
   locale: Locale;
   setLocale: (locale: Locale) => void;
+  syncFromStorage: () => void;
 }
 
 const initialLocale = detectInitialLocale();
 applyLocale(initialLocale);
 
-export const useLocale = create<LocaleStore>((set) => ({
+export const useLocale = create<LocaleStore>((set, get) => ({
   locale: initialLocale,
   setLocale: (locale) => {
     applyLocale(locale);
@@ -45,7 +46,20 @@ export const useLocale = create<LocaleStore>((set) => ({
     }
     set({ locale });
   },
+  syncFromStorage: () => {
+    const next = detectInitialLocale();
+    applyLocale(next);
+    if (get().locale !== next) set({ locale: next });
+  },
 }));
+
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key === STORAGE_KEY) {
+      useLocale.getState().syncFromStorage();
+    }
+  });
+}
 
 /** Subscribes to the active locale and returns the matching translation dictionary. */
 export function useT(): Translations {

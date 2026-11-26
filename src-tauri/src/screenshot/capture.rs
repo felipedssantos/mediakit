@@ -11,7 +11,7 @@ use xcap::Monitor;
 
 use crate::error::{AppError, AppResult};
 use crate::screenshot::region::overlay_label_for;
-use crate::screenshot::{ScreenshotCapture, ScreenshotHistoryItem};
+use crate::screenshot::ScreenshotHistoryItem;
 
 const HISTORY_LIMIT: usize = 100;
 
@@ -22,26 +22,6 @@ pub struct MonitorShot {
     pub width: u32,
     pub height: u32,
     pub image: image::RgbaImage,
-    pub capture: ScreenshotCapture,
-}
-
-pub fn temp_png_path() -> AppResult<PathBuf> {
-    let dir = std::env::temp_dir().join("mediakit-screenshots");
-    fs::create_dir_all(&dir)?;
-    Ok(dir.join(format!("{}.webp", Uuid::new_v4())))
-}
-
-pub fn save_webp(image: &image::RgbaImage, path: &Path) -> AppResult<ScreenshotCapture> {
-    let width = image.width();
-    let height = image.height();
-    let encoder = webp::Encoder::from_rgba(image, width, height);
-    let webp_data = encoder.encode(75.0);
-    fs::write(path, &webp_data[..])?;
-    Ok(ScreenshotCapture {
-        path: path.to_string_lossy().into_owned(),
-        width,
-        height,
-    })
 }
 
 pub fn save_png(image: &image::RgbaImage, path: &Path) -> AppResult<()> {
@@ -80,7 +60,7 @@ pub fn crop_rgba(
     Ok(image::imageops::crop_imm(image, x, y, width, height).to_image())
 }
 
-pub fn capture_all_monitors() -> AppResult<Vec<MonitorShot>> {
+pub fn sorted_monitors() -> AppResult<Vec<Monitor>> {
     let mut monitors = Monitor::all().map_err(|e| AppError::message(e.to_string()))?;
     monitors.sort_by(|a, b| {
         b.is_primary()
@@ -91,32 +71,62 @@ pub fn capture_all_monitors() -> AppResult<Vec<MonitorShot>> {
     if monitors.is_empty() {
         return Err(AppError::NotFound("Nenhum monitor encontrado"));
     }
-    let mut shots = Vec::new();
-    for (index, monitor) in monitors.into_iter().enumerate() {
-        let monitor_id = monitor.id().unwrap_or(index as u32);
-        let x = monitor.x().unwrap_or(0);
-        let y = monitor.y().unwrap_or(0);
-        let width = monitor
-            .width()
-            .map_err(|e| AppError::message(e.to_string()))?;
-        let height = monitor
-            .height()
-            .map_err(|e| AppError::message(e.to_string()))?;
-        let image = monitor
-            .capture_image()
-            .map_err(|e| AppError::message(e.to_string()))?;
-        let capture = save_webp(&image, &temp_png_path()?)?;
-        shots.push(MonitorShot {
-            overlay_label: overlay_label_for(index, monitor_id),
-            x,
-            y,
-            width,
-            height,
-            image,
-            capture,
-        });
+    Ok(monitors)
+}
+
+fn capture_monitor_at(index: usize, monitor: xcap::Monitor) -> AppResult<MonitorShot> {
+    let monitor_id = monitor.id().unwrap_or(index as u32);
+    let x = monitor.x().unwrap_or(0);
+    let y = monitor.y().unwrap_or(0);
+    let width = monitor
+        .width()
+        .map_err(|e| AppError::message(e.to_string()))?;
+    let height = monitor
+        .height()
+        .map_err(|e| AppError::message(e.to_string()))?;
+    let image = monitor
+        .capture_image()
+        .map_err(|e| AppError::message(e.to_string()))?;
+    Ok(MonitorShot {
+        overlay_label: overlay_label_for(index, monitor_id),
+        x,
+        y,
+        width,
+        height,
+        image,
+    })
+}
+
+pub fn capture_all_monitors() -> AppResult<Vec<MonitorShot>> {
+    let monitors = sorted_monitors()?;
+    if monitors.len() == 1 {
+        let monitor = monitors.into_iter().next().unwrap();
+        return Ok(vec![capture_monitor_at(0, monitor)?]);
     }
-    Ok(shots)
+    let count = monitors.len();
+    drop(monitors);
+    let results: Vec<AppResult<MonitorShot>> = std::thread::scope(|scope| {
+        let handles: Vec<_> = (0..count)
+            .map(|index| {
+                scope.spawn(move || {
+                    let monitor = sorted_monitors()?
+                        .into_iter()
+                        .nth(index)
+                        .ok_or(AppError::NotFound("Monitor não encontrado"))?;
+                    capture_monitor_at(index, monitor)
+                })
+            })
+            .collect();
+        handles
+            .into_iter()
+            .map(|handle| {
+                handle
+                    .join()
+                    .unwrap_or_else(|_| Err(AppError::message("Falha na captura do monitor")))
+            })
+            .collect()
+    });
+    results.into_iter().collect()
 }
 
 pub fn history_dir(app: &AppHandle) -> AppResult<PathBuf> {

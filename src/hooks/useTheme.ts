@@ -32,6 +32,7 @@ interface ThemeStore {
   theme: ThemeMode;
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
+  syncFromStorage: () => void;
 }
 
 const initialTheme = detectInitialTheme();
@@ -52,7 +53,20 @@ export const useTheme = create<ThemeStore>((set, get) => ({
     const next: ThemeMode = get().theme === "dark" ? "light" : "dark";
     get().setTheme(next);
   },
+  syncFromStorage: () => {
+    const next = detectInitialTheme();
+    applyTheme(next);
+    if (get().theme !== next) set({ theme: next });
+  },
 }));
+
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key === STORAGE_KEY) {
+      useTheme.getState().syncFromStorage();
+    }
+  });
+}
 
 /** Synchronizes the `data-theme` attribute on `<html>` with the theme store. */
 export function useThemeSync() {

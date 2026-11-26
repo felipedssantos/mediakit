@@ -144,7 +144,8 @@ export const en: Translations = {
   },
   dropZone: {
     defaultTitle: "Drop your videos here",
-    defaultHint: "Or click here to choose one or more files from your computer.",
+    defaultHint:
+      "Or click here to choose one or more files from your computer.",
     probingTitle: "Reading file info...",
     probingHint: "Checking duration, resolution, and size of each video.",
   },
@@ -221,9 +222,9 @@ export const en: Translations = {
     codecLabel: "Video standard (codec)",
     formatLabel: "Output format",
     nvidiaLabel: "Accelerate with GPU",
-    nvidiaUnsupportedFormat:
-      "This format does not use GPU acceleration.",
-    nvidiaPresetLocked: "This option already uses the graphics card automatically.",
+    nvidiaUnsupportedFormat: "This format does not use GPU acceleration.",
+    nvidiaPresetLocked:
+      "This option already uses the graphics card automatically.",
     nvidiaAvailable: "Converts faster using your graphics card.",
     nvidiaUnavailable: "No compatible GPU found.",
     audioConcurrencyHint:
@@ -261,7 +262,8 @@ export const en: Translations = {
     searchingButton: "Fetching...",
     searchSingle: "Fetch video",
     searchMany: (count: number) => `Fetch ${count} links`,
-    linksInList: (count: number) => `${count} link${count === 1 ? "" : "s"} in list`,
+    linksInList: (count: number) =>
+      `${count} link${count === 1 ? "" : "s"} in list`,
     cookiesHint:
       "One link per line — fetching starts automatically on paste. If a site requires sign-in, log in via Chrome, Edge, or Firefox first.",
     readyListTitle: "Ready to download",
@@ -300,7 +302,8 @@ export const en: Translations = {
     cardVideoDetail: (quality: string) =>
       `Video ${quality === "best" ? "best available" : quality}`,
     errNoLinks: "Paste one or more links to continue.",
-    errProbeFirst: "Wait for fetching to finish or click Fetch to load the links.",
+    errProbeFirst:
+      "Wait for fetching to finish or click Fetch to load the links.",
     errNoDir: "Choose a folder to save the files.",
   },
   screenshot: {
@@ -315,7 +318,8 @@ export const en: Translations = {
       "Copying or saving in the overlay keeps your history. The file stays in the app to reopen later.",
     stepDir: "Destination folder",
     windowsPicturesDir: "System Pictures folder",
-    dirHint: "Saving in the overlay and on this page puts the file in this folder.",
+    dirHint:
+      "Saving in the overlay and on this page puts the file in this folder.",
     stepHistory: "Captures",
     emptyHistory: "No screenshots yet. Press Print Screen to capture.",
     selectedAlt: "Selected screenshot",
@@ -323,24 +327,20 @@ export const en: Translations = {
     deleteDialogBody:
       "This screenshot will be removed from the list and cannot be undone. Delete anyway?",
     toastCopied: "Image copied to clipboard",
+    captureNow: "Capture now",
   },
   snip: {
-    toolFullscreen: "Screen",
-    toolWindow: "Window",
-    toolRegion: "Region",
+    toolFullscreen: "Full screen",
+    toolSelect: "Adjust",
+    toolPen: "Pen",
     toolArrow: "Arrow",
     toolRect: "Rectangle",
+    toolEllipse: "Ellipse",
     toolText: "Text",
-    hintText: "Click to type · Enter confirms",
-    hintArrow: "Drag to draw arrow",
-    hintRect: "Drag to draw rectangle",
-    hintWindowFallback: "Hover and click on a window",
-    hintRegion: "Drag to select region",
-    hintFullscreen: "Click to capture the full screen",
-    footerAnnotate: " · Copy or Save confirms · Ctrl+Z undoes",
-    footerCopy: " · copies immediately",
-    footerSave: " · saves to folder",
-    footerEscape: " · Esc cancels",
+    toolPixelate: "Pixelate",
+    toolReselect: "Reselect",
+    hintSelecting:
+      "Hover window or screen edge · Click to edit · Drag for free region · Esc cancels",
   },
   settings: {
     title: "Settings",
@@ -452,7 +452,8 @@ export const en: Translations = {
     },
     img_convert_webp: {
       label: "Convert to WebP",
-      description: "Changes format to WebP, smaller than JPEG at equal quality.",
+      description:
+        "Changes format to WebP, smaller than JPEG at equal quality.",
       bestFor: "Great for websites, apps, and sharing where WebP is supported",
     },
   },
@@ -482,8 +483,7 @@ export const en: Translations = {
     sourceCustom: "External",
     sourceMissing: "Unavailable",
     customDirLabel: "External binaries folder",
-    customDirHint:
-      "Folder containing ffmpeg, ffprobe, and yt-dlp (optional).",
+    customDirHint: "Folder containing ffmpeg, ffprobe, and yt-dlp (optional).",
     customDirPlaceholder: "Using default app binaries",
     pickFolder: "Choose folder",
     pickExe: "Choose binary",

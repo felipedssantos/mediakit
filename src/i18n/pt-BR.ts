@@ -30,8 +30,7 @@ export const ptBR = {
     concurrencyLabel: "Arquivos ao mesmo tempo",
     stepAdjustments: "Onde salvar e qualidade",
     removeItem: (name: string) => `Remover ${name}`,
-    filesCount: (count: number) =>
-      `${count} arquivo${count === 1 ? "" : "s"}`,
+    filesCount: (count: number) => `${count} arquivo${count === 1 ? "" : "s"}`,
   },
   theme: {
     lightLabel: "Modo claro",
@@ -92,8 +91,7 @@ export const ptBR = {
     featureBatchTitle: "Vários de uma vez",
     featureBatchDetail: "Arraste uma pasta ou lote inteiro para a fila.",
     featureSafeTitle: "Originais preservados",
-    featureSafeDetail:
-      "Sempre criamos uma cópia nova sem apagar seu arquivo.",
+    featureSafeDetail: "Sempre criamos uma cópia nova sem apagar seu arquivo.",
     featureLimitsTitle: "Sem limites",
     featureLimitsDetail:
       "Sem marca d'água, sem cadastro e sem limite de tamanho.",
@@ -144,7 +142,8 @@ export const ptBR = {
   },
   dropZone: {
     defaultTitle: "Arraste seus vídeos para cá",
-    defaultHint: "Ou clique aqui para escolher um ou vários arquivos do computador.",
+    defaultHint:
+      "Ou clique aqui para escolher um ou vários arquivos do computador.",
     probingTitle: "Lendo informações dos arquivos...",
     probingHint: "Conferindo duração, resolução e tamanho de cada vídeo.",
   },
@@ -253,7 +252,8 @@ export const ptBR = {
     stepFormatLabel: "Formato",
     stepDownloadLabel: "Baixar",
     title: "Baixar vídeo",
-    detail: "Cole um ou vários links para baixar o vídeo completo ou apenas o áudio",
+    detail:
+      "Cole um ou vários links para baixar o vídeo completo ou apenas o áudio",
     stepLinks: "Cole os links",
     placeholder: "https://www.youtube.com/watch?v=...\nhttps://vimeo.com/...",
     pasteClipboard: "Colar link",
@@ -301,7 +301,8 @@ export const ptBR = {
     cardVideoDetail: (quality: string) =>
       `Vídeo ${quality === "best" ? "melhor disponível" : quality}`,
     errNoLinks: "Cole um ou mais links para continuar.",
-    errProbeFirst: "Primeiro aguarde ou clique em Buscar para carregar os links.",
+    errProbeFirst:
+      "Primeiro aguarde ou clique em Buscar para carregar os links.",
     errNoDir: "Escolha uma pasta para salvar os arquivos.",
   },
   screenshot: {
@@ -316,7 +317,8 @@ export const ptBR = {
       "Copiar e salvar no overlay não apaga o histórico. O arquivo fica no app para reabrir depois.",
     stepDir: "Pasta de destino",
     windowsPicturesDir: "Pasta Imagens do sistema",
-    dirHint: "Salvar no overlay e nesta página envia o arquivo para esta pasta.",
+    dirHint:
+      "Salvar no overlay e nesta página envia o arquivo para esta pasta.",
     stepHistory: "Prints feitos",
     emptyHistory: "Nenhum print ainda. Use Print Screen para capturar.",
     selectedAlt: "Print selecionado",
@@ -324,24 +326,20 @@ export const ptBR = {
     deleteDialogBody:
       "Este print sai da lista e não dá para desfazer. Quer excluir mesmo?",
     toastCopied: "Imagem copiada para a área de transferência",
+    captureNow: "Capturar agora",
   },
   snip: {
-    toolFullscreen: "Tela",
-    toolWindow: "Janela",
-    toolRegion: "Área",
+    toolFullscreen: "Tela inteira",
+    toolSelect: "Ajustar",
+    toolPen: "Caneta",
     toolArrow: "Seta",
-    toolRect: "Quadrado",
+    toolRect: "Retângulo",
+    toolEllipse: "Elipse",
     toolText: "Texto",
-    hintText: "Clique para escrever · Enter confirma",
-    hintArrow: "Arraste para a seta",
-    hintRect: "Arraste para o quadrado",
-    hintWindowFallback: "Passe o mouse e clique na janela",
-    hintRegion: "Arraste para selecionar a área",
-    hintFullscreen: "Clique para capturar a tela toda",
-    footerAnnotate: " · Copiar ou Salvar confirma · Ctrl+Z desfaz",
-    footerCopy: " · copia na hora",
-    footerSave: " · salva na pasta",
-    footerEscape: " · Esc cancela",
+    toolPixelate: "Mosaico",
+    toolReselect: "Nova seleção",
+    hintSelecting:
+      "Passe o mouse na janela ou borda da tela · Clique para editar · Arraste para área livre · Esc cancela",
   },
   settings: {
     title: "Configurações",
@@ -391,12 +389,14 @@ export const ptBR = {
   presets: {
     compress_web: {
       label: "Comprimir para enviar",
-      description: "Deixa o arquivo bem menor, com uma leve perda de qualidade.",
+      description:
+        "Deixa o arquivo bem menor, com uma leve perda de qualidade.",
       bestFor: "Bom para WhatsApp, e-mail e upload rápido",
     },
     compress_quality: {
       label: "Comprimir com qualidade",
-      description: "Reduz bastante o tamanho quase sem perder qualidade visual.",
+      description:
+        "Reduz bastante o tamanho quase sem perder qualidade visual.",
       bestFor: "Bom para guardar vídeos importantes ocupando pouco espaço",
     },
     convert_mp4: {
@@ -412,8 +412,7 @@ export const ptBR = {
     },
     gpu_nvenc: {
       label: "Comprimir com GPU (rápido)",
-      description:
-        "Usa a placa de vídeo (GPU) para converter bem mais rápido.",
+      description: "Usa a placa de vídeo (GPU) para converter bem mais rápido.",
       bestFor: "Bom quando você tem muitos vídeos e pressa",
     },
   },
@@ -485,8 +484,7 @@ export const ptBR = {
     sourceCustom: "Externo",
     sourceMissing: "Indisponível",
     customDirLabel: "Pasta externa de binários",
-    customDirHint:
-      "Pasta contendo ffmpeg, ffprobe e yt-dlp (opcional).",
+    customDirHint: "Pasta contendo ffmpeg, ffprobe e yt-dlp (opcional).",
     customDirPlaceholder: "Usando binários padrão do app",
     pickFolder: "Escolher pasta",
     pickExe: "Escolher binário",

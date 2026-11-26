@@ -227,8 +227,7 @@ export const fr: Translations = {
     codecLabel: "Standard vidéo (codec)",
     formatLabel: "Format final",
     nvidiaLabel: "Accélérer avec carte graphique (GPU)",
-    nvidiaUnsupportedFormat:
-      "Ce format n'utilise pas l'accélération GPU.",
+    nvidiaUnsupportedFormat: "Ce format n'utilise pas l'accélération GPU.",
     nvidiaPresetLocked:
       "Cette option utilise déjà la carte graphique automatiquement.",
     nvidiaAvailable: "Convertit plus vite grâce à votre carte graphique.",
@@ -316,7 +315,8 @@ export const fr: Translations = {
   },
   screenshot: {
     title: "Capture d'écran",
-    detail: "Appuyez sur Impr écran pour capturer, annoter, copier ou enregistrer",
+    detail:
+      "Appuyez sur Impr écran pour capturer, annoter, copier ou enregistrer",
     stepHow: "Comment faire une capture",
     howPart1: "Appuyez sur",
     howKey: "Print Screen",
@@ -336,24 +336,20 @@ export const fr: Translations = {
     deleteDialogBody:
       "Cette capture sera retirée de la liste de façon irréversible. Supprimer quand même ?",
     toastCopied: "Image copiée dans le presse-papiers",
+    captureNow: "Capturer",
   },
   snip: {
-    toolFullscreen: "Écran",
-    toolWindow: "Fenêtre",
-    toolRegion: "Zone",
+    toolFullscreen: "Plein écran",
+    toolSelect: "Ajuster",
+    toolPen: "Stylo",
     toolArrow: "Flèche",
     toolRect: "Rectangle",
+    toolEllipse: "Ellipse",
     toolText: "Texte",
-    hintText: "Cliquez pour écrire · Entrée confirme",
-    hintArrow: "Glissez pour tracer la flèche",
-    hintRect: "Glissez pour tracer le rectangle",
-    hintWindowFallback: "Survolez et cliquez sur une fenêtre",
-    hintRegion: "Glissez pour sélectionner la zone",
-    hintFullscreen: "Cliquez pour capturer tout l'écran",
-    footerAnnotate: " · Copier ou Enregistrer confirme · Ctrl+Z annule",
-    footerCopy: " · copie immédiatement",
-    footerSave: " · enregistre dans le dossier",
-    footerEscape: " · Échap annule",
+    toolPixelate: "Mosaïque",
+    toolReselect: "Nouvelle zone",
+    hintSelecting:
+      "Survolez une fenêtre ou un bord · Cliquez pour éditer · Glissez pour zone libre · Échap annule",
   },
   settings: {
     title: "Paramètres",
@@ -362,7 +358,8 @@ export const fr: Translations = {
     resetDefaults: "Rétablir par défaut",
     resetDone: "Paramètres rétablis par défaut.",
     appearanceTitle: "Apparence",
-    appearanceDetail: "Choisissez le thème visuel et la langue de l'application.",
+    appearanceDetail:
+      "Choisissez le thème visuel et la langue de l'application.",
     themeLabel: "Thème de l'app",
     languageLabel: "Langue",
     foldersTitle: "Dossiers par défaut",
@@ -389,8 +386,7 @@ export const fr: Translations = {
     imageCompressPresetLabel: "Mode par défaut en compression",
     imageConvertFormatLabel: "Format par défaut en conversion",
     youtubeTitle: "Préréglages de téléchargement",
-    youtubeDetail:
-      "Options initiales à l'ouverture du téléchargeur de vidéos.",
+    youtubeDetail: "Options initiales à l'ouverture du téléchargeur de vidéos.",
     youtubeModeLabel: "Mode par défaut",
     youtubeModeVideo: "Vidéo (MP4)",
     youtubeModeAudio: "Audio seul",
@@ -412,7 +408,8 @@ export const fr: Translations = {
       label: "Compresser avec qualité",
       description:
         "Réduit nettement la taille presque sans perte de qualité visuelle.",
-      bestFor: "Idéal pour archiver des vidéos importantes en occupant peu d'espace",
+      bestFor:
+        "Idéal pour archiver des vidéos importantes en occupant peu d'espace",
     },
     convert_mp4: {
       label: "Convertir la vidéo",
@@ -469,8 +466,7 @@ export const fr: Translations = {
     },
     img_convert_webp: {
       label: "Convertir en WebP",
-      description:
-        "Passe au format WebP, plus léger que JPEG à qualité égale.",
+      description: "Passe au format WebP, plus léger que JPEG à qualité égale.",
       bestFor: "Idéal pour le web, les apps et l'envoi si WebP est accepté",
     },
   },
@@ -500,8 +496,7 @@ export const fr: Translations = {
     sourceCustom: "Externe",
     sourceMissing: "Indisponible",
     customDirLabel: "Dossier externe des binaires",
-    customDirHint:
-      "Dossier contenant ffmpeg, ffprobe et yt-dlp (optionnel).",
+    customDirHint: "Dossier contenant ffmpeg, ffprobe et yt-dlp (optionnel).",
     customDirPlaceholder: "Binaires par défaut utilisés",
     pickFolder: "Choisir dossier",
     pickExe: "Choisir binaire",

@@ -42,11 +42,9 @@
     rgba(248, 250, 252, 0.65) 100%
   );
   --shadow-card:
-    0 1px 2px rgba(15, 23, 42, 0.06),
-    0 6px 16px -4px rgba(15, 23, 42, 0.06);
+    0 1px 2px rgba(15, 23, 42, 0.06), 0 6px 16px -4px rgba(15, 23, 42, 0.06);
   --shadow-card-hover:
-    0 2px 6px rgba(15, 23, 42, 0.08),
-    0 14px 28px -8px rgba(37, 99, 235, 0.14);
+    0 2px 6px rgba(15, 23, 42, 0.08), 0 14px 28px -8px rgba(37, 99, 235, 0.14);
   --bevel-top: inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
@@ -88,16 +86,15 @@
     rgba(255, 255, 255, 0) 55%
   );
   --shadow-card:
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    0 8px 20px -8px rgba(0, 0, 0, 0.45);
+    0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 20px -8px rgba(0, 0, 0, 0.45);
   --shadow-card-hover:
-    0 4px 12px rgba(0, 0, 0, 0.45),
-    0 16px 32px -10px rgba(59, 130, 246, 0.22);
+    0 4px 12px rgba(0, 0, 0, 0.45), 0 16px 32px -10px rgba(59, 130, 246, 0.22);
   --bevel-top: inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 
 @theme {
-  --font-display: "Plus Jakarta Sans Variable", "Inter Variable", system-ui, sans-serif;
+  --font-display:
+    "Plus Jakarta Sans Variable", "Inter Variable", system-ui, sans-serif;
   --font-sans: "Inter Variable", system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
 
@@ -139,6 +136,11 @@ body,
 #root {
   height: 100%;
   overflow: hidden;
+}
+
+html[data-snip="true"],
+html[data-snip="true"] body {
+  background: transparent;
 }
 
 body {
@@ -212,9 +214,10 @@ textarea {
 .bg-studio-canvas {
   background-color: var(--bg-canvas);
   background-image:
-    var(--hero-glow),
-    radial-gradient(var(--grid-dot) 1px, transparent 1px);
-  background-size: 100% 100%, 20px 20px;
+    var(--hero-glow), radial-gradient(var(--grid-dot) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    20px 20px;
 }
 
 .bg-studio-inset {
