@@ -29,6 +29,7 @@ fn copy_rgba_to_bgra_opaque(src: &[u8], dst: &mut [u8]) {
 
 /// Converts RGBA pixels to a bottom-up 32-bit CF_DIB payload with opaque alpha
 /// for maximum compatibility across Windows clipboard consumers.
+#[cfg(any(windows, test))]
 pub fn rgba_to_dib(image: &image::RgbaImage) -> Vec<u8> {
     let width = image.width() as usize;
     let height = image.height() as usize;
@@ -87,25 +88,15 @@ fn copy_rgba(image: &image::RgbaImage) -> AppResult<()> {
         .map_err(|e| AppError::message(e.to_string()))
 }
 
-pub fn copy_dib_on_main(app: &AppHandle, dib: Vec<u8>) -> AppResult<()> {
-    #[cfg(windows)]
-    {
-        let (tx, rx) = std::sync::mpsc::channel();
-        app.run_on_main_thread(move || {
-            let _ = tx.send(set_clipboard_image_bytes(&dib));
-        })
-        .map_err(|e| AppError::message(e.to_string()))?;
-        rx.recv().map_err(|_| {
-            AppError::message("Não foi possível copiar para a área de transferência")
-        })?
-    }
-    #[cfg(not(windows))]
-    {
-        let _ = (app, dib);
-        Err(AppError::message(
-            "Cópia de print não suportada nesta plataforma",
-        ))
-    }
+#[cfg(windows)]
+fn copy_dib_on_main(app: &AppHandle, dib: Vec<u8>) -> AppResult<()> {
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.run_on_main_thread(move || {
+        let _ = tx.send(set_clipboard_image_bytes(&dib));
+    })
+    .map_err(|e| AppError::message(e.to_string()))?;
+    rx.recv()
+        .map_err(|_| AppError::message("Não foi possível copiar para a área de transferência"))?
 }
 
 pub fn copy_rgba_on_main(app: &AppHandle, image: &image::RgbaImage) -> AppResult<()> {
