@@ -30,6 +30,16 @@ export type ResizeHandle =
 
 export const EDGE_SNAP_PX = 12;
 
+export function constrainSquarePoint(origin: Point, current: Point): Point {
+  const dx = current.x - origin.x;
+  const dy = current.y - origin.y;
+  const size = Math.max(Math.abs(dx), Math.abs(dy));
+  return {
+    x: origin.x + (dx < 0 ? -size : size),
+    y: origin.y + (dy < 0 ? -size : size),
+  };
+}
+
 export function normalizeRect(a: Point, b: Point): Rect {
   const x = Math.min(a.x, b.x);
   const y = Math.min(a.y, b.y);

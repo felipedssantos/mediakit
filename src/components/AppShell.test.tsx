@@ -37,7 +37,7 @@ describe("AppShell navigation and theme", () => {
     expect(activeBtn.getAttribute("aria-current")).toBe("page");
     expect(screen.getByLabelText("3 active")).toBeTruthy();
     expect(screen.getByLabelText("1 active")).toBeTruthy();
-    expect(screen.getByText("v0.2.0 Beta")).toBeTruthy();
+    expect(screen.getByText("v0.3.0 Beta")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: /Download video/i }));
     expect(onSelect).toHaveBeenCalledWith("youtube");
@@ -79,9 +79,7 @@ describe("AppShell navigation and theme", () => {
     fireEvent.click(screen.getByRole("button", { name: "Audio only" }));
     expect(useAppSettings.getState().youtubeMode).toBe("audio");
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Restore defaults" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Restore defaults" }));
     expect(useAppSettings.getState().imageConvertFormat).toBe("jpeg");
     expect(useAppSettings.getState().youtubeMode).toBe("video");
   });

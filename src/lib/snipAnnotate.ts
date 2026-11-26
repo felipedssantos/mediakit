@@ -114,19 +114,48 @@ export function penSvgPath(points: Point[]): string {
   return d;
 }
 
-export function arrowHeadPoints(
+export interface ArrowGeometry {
+  shaftEnd: Point;
+  head: [Point, Point, Point];
+  headPoints: string;
+}
+
+export function arrowGeometry(
   x1: number,
   y1: number,
   x2: number,
   y2: number,
-  head: number,
-): string {
-  const angle = Math.atan2(y2 - y1, x2 - x1);
-  const ax = x2 - head * Math.cos(angle - Math.PI / 7);
-  const ay = y2 - head * Math.sin(angle - Math.PI / 7);
-  const bx = x2 - head * Math.cos(angle + Math.PI / 7);
-  const by = y2 - head * Math.sin(angle + Math.PI / 7);
-  return `${x2},${y2} ${ax},${ay} ${bx},${by}`;
+  stroke: number,
+): ArrowGeometry | null {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.hypot(dx, dy);
+  if (len < 0.001) return null;
+
+  const angle = Math.atan2(dy, dx);
+  const headLen = Math.min(Math.max(16, stroke * 4.5), len * 0.75);
+  const spread = Math.PI / 6;
+  const shaftLen = Math.max(0, len - headLen * 0.75);
+
+  const shaftEnd: Point = {
+    x: x1 + Math.cos(angle) * shaftLen,
+    y: y1 + Math.sin(angle) * shaftLen,
+  };
+  const tip: Point = { x: x2, y: y2 };
+  const left: Point = {
+    x: x2 - headLen * Math.cos(angle - spread),
+    y: y2 - headLen * Math.sin(angle - spread),
+  };
+  const right: Point = {
+    x: x2 - headLen * Math.cos(angle + spread),
+    y: y2 - headLen * Math.sin(angle + spread),
+  };
+
+  return {
+    shaftEnd,
+    head: [tip, left, right],
+    headPoints: `${tip.x},${tip.y} ${left.x},${left.y} ${right.x},${right.y}`,
+  };
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -176,28 +205,19 @@ function drawArrow(
   color: string,
   stroke: number,
 ) {
-  const head = Math.max(14, stroke * 4);
-  const angle = Math.atan2(y2 - y1, x2 - x1);
-  const shorten = head * 0.55;
-  const tx = x2 - Math.cos(angle) * shorten;
-  const ty = y2 - Math.sin(angle) * shorten;
+  const geom = arrowGeometry(x1, y1, x2, y2, stroke);
+  if (!geom) return;
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
   ctx.lineWidth = stroke;
   ctx.beginPath();
   ctx.moveTo(x1, y1);
-  ctx.lineTo(tx, ty);
+  ctx.lineTo(geom.shaftEnd.x, geom.shaftEnd.y);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(x2, y2);
-  ctx.lineTo(
-    x2 - head * Math.cos(angle - Math.PI / 7),
-    y2 - head * Math.sin(angle - Math.PI / 7),
-  );
-  ctx.lineTo(
-    x2 - head * Math.cos(angle + Math.PI / 7),
-    y2 - head * Math.sin(angle + Math.PI / 7),
-  );
+  ctx.moveTo(geom.head[0].x, geom.head[0].y);
+  ctx.lineTo(geom.head[1].x, geom.head[1].y);
+  ctx.lineTo(geom.head[2].x, geom.head[2].y);
   ctx.closePath();
   ctx.fill();
 }

@@ -69,7 +69,7 @@ fn create_overlay_window(app: &AppHandle, label: &str) -> AppResult<WebviewWindo
         .initialization_script("window.__MEDIAKIT_SNIP__ = true;")
         .title("Selecionar área")
         .decorations(false)
-        .transparent(false)
+        .transparent(true)
         .always_on_top(true)
         .skip_taskbar(true)
         .resizable(false)
@@ -193,13 +193,13 @@ fn show_monitor_overlays(
         let size = Size::Physical(PhysicalSize::new(shot.width, shot.height));
         let _ = overlay.set_position(pos);
         let _ = overlay.set_size(size);
+        if let Some(dto) = dtos.get(&shot.overlay_label) {
+            let _ = overlay.emit("snip-session-ready", dto);
+        }
         let _ = overlay.set_always_on_top(true);
         let _ = overlay.show();
         // Re-apply physical size after show so cross-monitor DPI changes do not clamp bounds.
         let _ = overlay.set_size(size);
-        if let Some(dto) = dtos.get(&shot.overlay_label) {
-            let _ = overlay.emit("snip-session-ready", dto);
-        }
     }
 
     for window in overlay_windows(app) {

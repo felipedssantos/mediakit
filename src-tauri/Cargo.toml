@@ -1,6 +1,6 @@
 [package]
 name = "mediakit"
-version = "0.2.0"
+version = "0.3.0"
 description = "Cross-platform desktop app (Windows & Linux) for local video/image compression, conversion, and media downloads"
 authors = ["Felipe Dumont"]
 license = "MIT"

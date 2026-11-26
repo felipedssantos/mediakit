@@ -93,9 +93,12 @@ Watch in full quality: [MP4](https://github.com/felipedssantos/mediakit/releases
 - **Autostart**: Launches minimized to the tray on Windows startup (`--autostart`).
 - **Themes & Locales**: Light and Dark themes, with UI support for `English`, `Português (BR)`, `Português (PT)`, `Español`, and `Français`.
 
-### Experimental
+### Screenshot & Annotation
 
-- **Screenshot & Annotation Overlay**: Disabled by default via `SCREENSHOT_ENABLED = false` in `src/lib/features.ts` and `src-tauri/src/features.rs`.
+- **Quick Trigger**: Press `Print Screen` or `Alt+Shift+S` globally, use the system tray menu, or click **Capture now** on the **Screenshot** page.
+- **Region & Window Selection**: Hover over a window or screen edge to snap, click to edit, or drag to select a free region (`Esc` cancels, `Backspace` reselects).
+- **Annotation Toolbar**: Built-in color swatches, **Adjust** (`1`), **Pen** (`2`), **Arrow** (`3`), **Rectangle** (`4`), **Ellipse** (`5`), **Text** (`6`), **Pixelate** mosaic obfuscation (`7`), and **Undo** (`Ctrl+Z`).
+- **Copy, Save & History**: Copy directly to the clipboard (`Enter`) or save as PNG (`Ctrl+S`) to a configurable destination folder, with a persistent capture history on the **Screenshot** page.
 
 ## Screenshots
 
@@ -125,7 +128,7 @@ Download the installer for your OS from the [GitHub Releases](https://github.com
 2. _(Optional)_ Verify the SHA-256 checksum against `SHA256SUMS.txt` attached to the release:
 
 ```powershell
-Get-FileHash .\MediaKit_0.2.0_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\MediaKit_0.3.0_x64-setup.exe -Algorithm SHA256
 ```
 
 3. Run the installer and follow the setup wizard.
@@ -139,19 +142,19 @@ Get-FileHash .\MediaKit_0.2.0_x64-setup.exe -Algorithm SHA256
 
 ```bash
 sha256sum -c SHA256SUMS.txt --ignore-missing
-sudo apt install ./MediaKit_0.2.0_amd64.deb
+sudo apt install ./MediaKit_0.3.0_amd64.deb
 ```
 
 - **Portable (`.AppImage`)**:
 
 ```bash
-chmod +x MediaKit_0.2.0_amd64.AppImage
-./MediaKit_0.2.0_amd64.AppImage
+chmod +x MediaKit_0.3.0_amd64.AppImage
+./MediaKit_0.3.0_amd64.AppImage
 ```
 
 ## Quick Usage Guide
 
-1. **Choose a tool** from the Home screen or sidebar: Video/Audio, Images, or Media Downloader.
+1. **Choose a tool** from the Home screen or sidebar: Video/Audio, Images, Media Downloader, or Screenshot.
 2. **Add files or links**: Drag and drop media files into the window (or paste one URL per line in the downloader).
 3. **Select a preset & output options**: Pick compression/format presets, optional resolution/quality adjustments, and an output folder.
 4. **Monitor the queue**: Track progress in real time, retry or cancel jobs, and open the finished file directly in File Explorer.
@@ -257,11 +260,11 @@ mediakit/
 │   ├── components/     # Shared UI, queue cards, settings disclosures
 │   ├── hooks/          # Zustand queue stores and Tauri event hooks
 │   ├── i18n/           # Translations (en, pt-BR, pt-PT, es, fr)
-│   ├── lib/api/        # Tauri IPC boundary (jobs, youtube, files, sidecar, window)
-│   └── pages/          # Home, Video/Audio, Images, Downloader, Settings
+│   ├── lib/api/        # Tauri IPC boundary (jobs, youtube, screenshot, files, sidecar, window)
+│   └── pages/          # Home, Video/Audio, Images, Downloader, Screenshot, SnipOverlay, Settings
 ├── src-tauri/          # Rust backend + Tauri 2 configuration
 │   ├── binaries/       # Downloaded sidecar executables (gitignored)
-│   └── src/            # Commands, queue core, presets, ffprobe, workers, tray
+│   └── src/            # Commands, queue core, presets, ffprobe, workers, screenshot, tray
 ├── scripts/            # Pinned sidecar downloaders and cargo wrapper
 └── docs/               # Architecture documentation
 ```
