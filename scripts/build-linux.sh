@@ -37,6 +37,6 @@ npm run tauri build
 echo ">>> Exporting Linux bundles to /out..."
 mkdir -p /out
 cp -v /app/src-tauri/target/release/mediakit /out/mediakit
-find /app/src-tauri/target/release/bundle -type f \( -name '*.deb' -o -name '*.AppImage' \) -exec cp -v {} /out/ \;
+find /app/src-tauri/target/release/bundle -type f \( -name '*.deb' -o -name '*.AppImage' -o -name '*.sig' \) -exec cp -v {} /out/ \;
 echo ">>> Done!"
 ls -lh /out
