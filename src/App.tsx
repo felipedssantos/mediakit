@@ -4,12 +4,14 @@ import { Sidebar } from "./components/Sidebar";
 import { SidecarBanner } from "./components/SidecarBanner";
 import { TitleBar } from "./components/TitleBar";
 import { Toast } from "./components/Toast";
+import { UpdateBanner } from "./components/UpdateBanner";
 import { useJobEvents, useJobs } from "./hooks/useJobs";
 import { useScreenshotHistory } from "./hooks/useScreenshotHistory";
 import { useScreenshotSettings } from "./hooks/useScreenshotSettings";
 import { useSidecars } from "./hooks/useSidecars";
 import { useThemeSync } from "./hooks/useTheme";
 import { useToast } from "./hooks/useToast";
+import { useUpdater } from "./hooks/useUpdater";
 import { useYoutubeJobEvents, useYoutubeJobs } from "./hooks/useYoutubeJobs";
 import { getT, useT } from "./hooks/useLocale";
 import { beginRegionCapture, onScreenshotCaptured } from "./lib/api/screenshot";
@@ -68,6 +70,7 @@ export default function App() {
   const hydrateSettings = useScreenshotSettings((state) => state.hydrate);
   const checkSidecars = useSidecars((state) => state.check);
   const loadSidecarConfig = useSidecars((state) => state.loadConfig);
+  const checkForUpdates = useUpdater((state) => state.checkForUpdates);
   const showToast = useToast((state) => state.show);
 
   const jobs = useJobs((state) => state.jobs);
@@ -100,7 +103,8 @@ export default function App() {
     if (isSnipOverlay) return;
     void loadSidecarConfig();
     void checkSidecars();
-  }, [checkSidecars, loadSidecarConfig]);
+    void checkForUpdates();
+  }, [checkForUpdates, checkSidecars, loadSidecarConfig]);
 
   useEffect(() => {
     if (isSnipOverlay || !SCREENSHOT_ENABLED) return;
@@ -145,6 +149,7 @@ export default function App() {
         onOpenSettings={() => setScreen("settings")}
         settingsActive={screen === "settings"}
       />
+      <UpdateBanner />
       <SidecarBanner onOpenSettings={() => setScreen("settings")} />
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <Sidebar

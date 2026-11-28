@@ -501,4 +501,21 @@ export const ptPT: Translations = {
     ffprobeExeLabel: "Caminho do ffprobe",
     ytdlpExeLabel: "Caminho do yt-dlp",
   },
+  updater: {
+    badge: "Atualização",
+    bannerTitle: (version: string) => `MediaKit v${version} disponível`,
+    bannerBody:
+      "Transfira e instale a nova versão com assinatura verificada, sem sair da app.",
+    releasedOn: (date: string) => `Publicada em ${date}`,
+    verifiedLabel: "Assinatura verificada",
+    notesToggle: "Ver novidades",
+    notesHide: "Ocultar novidades",
+    updateButton: "Atualizar e reiniciar",
+    retryButton: "Tentar novamente",
+    downloadingButton: "A transferir...",
+    installingButton: "A instalar...",
+    downloading: "A transferir pacote de atualização",
+    installing: "A verificar assinatura e reiniciar...",
+    dismissLabel: "Fechar aviso de atualização",
+  },
 };

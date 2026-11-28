@@ -1,7 +1,7 @@
 {
   "name": "mediakit",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Cross-platform desktop app (Windows & Linux) for local video/image conversion and media downloads",
   "author": "Felipe Dumont",
   "license": "MIT",
@@ -31,6 +31,8 @@
     "@tauri-apps/api": "^2.12.5",
     "@tauri-apps/plugin-dialog": "^2.8.4",
     "@tauri-apps/plugin-opener": "^2.7.3",
+    "@tauri-apps/plugin-process": "^2.4.0",
+    "@tauri-apps/plugin-updater": "^2.14.1",
     "animejs": "^4.5.0",
     "lucide-react": "^1.41.0",
     "react": "^19.1.0",

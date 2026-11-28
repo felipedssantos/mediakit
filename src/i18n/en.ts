@@ -493,4 +493,21 @@ export const en: Translations = {
     ffprobeExeLabel: "ffprobe path",
     ytdlpExeLabel: "yt-dlp path",
   },
+  updater: {
+    badge: "Update",
+    bannerTitle: (version: string) => `MediaKit v${version} is available`,
+    bannerBody:
+      "Download and install the signed update directly inside the app.",
+    releasedOn: (date: string) => `Released ${date}`,
+    verifiedLabel: "Signed release",
+    notesToggle: "Release notes",
+    notesHide: "Hide notes",
+    updateButton: "Update and restart",
+    retryButton: "Try again",
+    downloadingButton: "Downloading...",
+    installingButton: "Installing...",
+    downloading: "Downloading update package",
+    installing: "Verifying signature and restarting...",
+    dismissLabel: "Dismiss update notice",
+  },
 };
