@@ -505,6 +505,12 @@ export const fr: Translations = {
     ffmpegExeLabel: "Chemin de ffmpeg",
     ffprobeExeLabel: "Chemin de ffprobe",
     ytdlpExeLabel: "Chemin de yt-dlp",
+    withError: "(en erreur)",
+    restoreDefault: "Restaurer par défaut",
+    problemLabel: "Problème :",
+    solutionLabel: "Comment résoudre :",
+    customPathsToggle: "Chemins personnalisés et exécutables externes",
+    customPathsActive: "Actif",
   },
   updater: {
     badge: "Mise à jour",

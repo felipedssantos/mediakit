@@ -500,6 +500,12 @@ export const ptPT: Translations = {
     ffmpegExeLabel: "Caminho do ffmpeg",
     ffprobeExeLabel: "Caminho do ffprobe",
     ytdlpExeLabel: "Caminho do yt-dlp",
+    withError: "(com erro)",
+    restoreDefault: "Restaurar padrão",
+    problemLabel: "Problema:",
+    solutionLabel: "Como resolver:",
+    customPathsToggle: "Caminhos personalizados e executáveis externos",
+    customPathsActive: "Ativo",
   },
   updater: {
     badge: "Atualização",

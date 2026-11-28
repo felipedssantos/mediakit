@@ -290,7 +290,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                           {item.name}
                         </span>
                         <span className="rounded bg-rose-500/20 px-1.5 py-0.5 text-[10px] font-medium text-rose-300">
-                          {sourceLabels[item.source]} (com erro)
+                          {sourceLabels[item.source]} {t.sidecars.withError}
                         </span>
                       </div>
                       {item.source === "custom" ? (
@@ -299,7 +299,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                           onClick={() => void handleRestoreDefault(item.name)}
                           className="ui-control rounded-lg border border-rose-500/40 bg-surface px-2.5 py-1 text-[11px] font-medium text-rose-300 hover:bg-rose-500/20"
                         >
-                          Restaurar padrão
+                          {t.sidecars.restoreDefault}
                         </button>
                       ) : (
                         <button
@@ -308,19 +308,21 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                           onClick={() => void handleRepairSidecars()}
                           className="ui-control rounded-lg border border-accent/40 bg-accent px-2.5 py-1 text-[11px] font-medium text-white hover:opacity-90 disabled:opacity-50"
                         >
-                          Auto-reparar
+                          {t.sidecars.repairButton}
                         </button>
                       )}
                     </div>
                     <div className="space-y-1 pl-6 text-[11px] leading-relaxed">
                       <p className="text-ink">
-                        <strong className="text-rose-400">Problema: </strong>
+                        <strong className="text-rose-400">
+                          {t.sidecars.problemLabel}{" "}
+                        </strong>
                         {item.error}
                       </p>
                       {item.suggestion && (
                         <p className="text-ink-2">
                           <strong className="text-emerald-400">
-                            Como resolver:{" "}
+                            {t.sidecars.solutionLabel}{" "}
                           </strong>
                           {item.suggestion}
                         </p>
@@ -394,10 +396,10 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                     showCustomPaths ? "rotate-180" : ""
                   }`}
                 />
-                <span>Caminhos personalizados e executáveis externos</span>
+                <span>{t.sidecars.customPathsToggle}</span>
                 {hasCustomConfig && (
                   <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent">
-                    Ativo
+                    {t.sidecars.customPathsActive}
                   </span>
                 )}
               </button>

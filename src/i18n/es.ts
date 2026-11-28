@@ -496,6 +496,12 @@ export const es: Translations = {
     ffmpegExeLabel: "Ruta de ffmpeg",
     ffprobeExeLabel: "Ruta de ffprobe",
     ytdlpExeLabel: "Ruta de yt-dlp",
+    withError: "(con error)",
+    restoreDefault: "Restaurar predeterminado",
+    problemLabel: "Problema:",
+    solutionLabel: "Cómo resolverlo:",
+    customPathsToggle: "Rutas personalizadas y ejecutables externos",
+    customPathsActive: "Activo",
   },
   updater: {
     badge: "Actualización",

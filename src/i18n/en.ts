@@ -492,6 +492,12 @@ export const en: Translations = {
     ffmpegExeLabel: "ffmpeg path",
     ffprobeExeLabel: "ffprobe path",
     ytdlpExeLabel: "yt-dlp path",
+    withError: "(with error)",
+    restoreDefault: "Restore default",
+    problemLabel: "Problem:",
+    solutionLabel: "How to fix:",
+    customPathsToggle: "Custom paths and external executables",
+    customPathsActive: "Active",
   },
   updater: {
     badge: "Update",
