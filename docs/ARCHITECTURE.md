@@ -27,10 +27,10 @@ flowchart LR
   - `window.ts` — window controls (`TitleBar`) and webview drag-and-drop listeners.
 - **`src/hooks/`**:
   - `createJobQueueStore.ts` + `useQueueEvents` — shared Zustand store factory and Tauri event subscription lifecycle used by `useJobs.ts` and `useYoutubeJobs.ts`.
-  - `useMediaInfo.ts`, `useFileDrop.ts`, `useYoutubeForm.ts`, `useSnipSession.ts`.
+  - `useMediaInfo.ts`, `useFileDrop.ts`, `useYoutubeForm.ts`, `useSnipSession.ts`, `useUpdater.ts`.
 - **`src/components/`**:
   - Reusable queue primitives (`JobRow`, `JobCardBase`, `JobQueueList`) and thin domain wrappers (`JobCard`, `YoutubeJobCard`, `JobQueue`, `YoutubeJobQueue`).
-  - Shared converter shell (`ConverterLayout`, `PendingFilesList`) and settings fields (`OutputDirField`, `ConcurrencySlider`, `QualitySlider`).
+  - Shared converter shell (`ConverterLayout`, `PendingFilesList`), settings fields (`OutputDirField`, `ConcurrencySlider`, `QualitySlider`), and in-app updater banner (`UpdateBanner`).
 - **`src/i18n/pt-BR.ts`**: Typed UI string dictionary (`pt-BR`).
 
 ## Backend (`src-tauri/src/`)
@@ -52,4 +52,4 @@ flowchart LR
 
 - **CSP (`src-tauri/tauri.conf.json`)**: Restricts scripts to `'self'`, fonts to `'self' data:`, IPC to `ipc: http://ipc.localhost`, and images to `'self' asset: http://asset.localhost https: data: blob:` (needed for yt-dlp remote thumbnails and local screenshot assets).
 - **Asset Protocol**: Scoped strictly to `$TEMP/mediakit-screenshots/**` and `$APPLOCALDATA/screenshots/**`.
-- **Capabilities (`src-tauri/capabilities/default.json`)**: Grants only window controls, `dialog:allow-open`, and `opener:allow-reveal-item-in-dir`. Sidecars are invoked exclusively from Rust without exposing `shell` IPC permissions to the webview.
+- **Capabilities (`src-tauri/capabilities/default.json`)**: Grants only window controls, `dialog:allow-open`, `opener:allow-reveal-item-in-dir`, `updater:default`, and `process:allow-restart`. Sidecars are invoked exclusively from Rust without exposing `shell` IPC permissions to the webview.

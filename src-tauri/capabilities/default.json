@@ -11,6 +11,8 @@
     "core:window:allow-is-maximized",
     "core:window:allow-start-dragging",
     "dialog:allow-open",
-    "opener:allow-reveal-item-in-dir"
+    "opener:allow-reveal-item-in-dir",
+    "updater:default",
+    "process:allow-restart"
   ]
 }

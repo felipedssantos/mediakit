@@ -497,4 +497,21 @@ export const es: Translations = {
     ffprobeExeLabel: "Ruta de ffprobe",
     ytdlpExeLabel: "Ruta de yt-dlp",
   },
+  updater: {
+    badge: "Actualización",
+    bannerTitle: (version: string) => `MediaKit v${version} disponible`,
+    bannerBody:
+      "Descarga e instala la nueva versión con firma verificada sin salir de la app.",
+    releasedOn: (date: string) => `Publicada el ${date}`,
+    verifiedLabel: "Firma verificada",
+    notesToggle: "Ver novedades",
+    notesHide: "Ocultar novedades",
+    updateButton: "Actualizar y reiniciar",
+    retryButton: "Reintentar",
+    downloadingButton: "Descargando...",
+    installingButton: "Instalando...",
+    downloading: "Descargando paquete de actualización",
+    installing: "Verificando firma y reiniciando...",
+    dismissLabel: "Cerrar aviso de actualización",
+  },
 };

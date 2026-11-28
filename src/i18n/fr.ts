@@ -506,4 +506,21 @@ export const fr: Translations = {
     ffprobeExeLabel: "Chemin de ffprobe",
     ytdlpExeLabel: "Chemin de yt-dlp",
   },
+  updater: {
+    badge: "Mise à jour",
+    bannerTitle: (version: string) => `MediaKit v${version} disponible`,
+    bannerBody:
+      "Téléchargez et installez la mise à jour signée directement depuis l'application.",
+    releasedOn: (date: string) => `Publiée le ${date}`,
+    verifiedLabel: "Signature vérifiée",
+    notesToggle: "Nouveautés",
+    notesHide: "Masquer",
+    updateButton: "Mettre à jour et redémarrer",
+    retryButton: "Réessayer",
+    downloadingButton: "Téléchargement...",
+    installingButton: "Installation...",
+    downloading: "Téléchargement de la mise à jour",
+    installing: "Vérification de la signature et redémarrage...",
+    dismissLabel: "Fermer l'avis de mise à jour",
+  },
 };

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-11-28
+
+### Added
+
+- In-app automatic updater powered by `@tauri-apps/plugin-updater` and `@tauri-apps/plugin-process`, checking GitHub Releases (`latest.json`) on startup with cryptographic signature verification.
+- Redesigned `UpdateBanner` component with version transition badge (`current → next`), release date, signed-release indicator, expandable release notes, real-time MB/percentage download progress bar, error retry, and one-click update & restart.
+- Full localization for the updater banner across all supported languages (`en`, `pt-BR`, `pt-PT`, `es`, `fr`).
+- Mandatory release signing guidelines in `AGENTS.md`, `CONTRIBUTING.md`, and `README.md`.
+
 ## [0.3.0] - 2026-11-26
 
 ### Added
@@ -45,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Experimental screenshot & annotation overlay (`SCREENSHOT_ENABLED = false` by default).
 - Open-source repository setup: MIT license, contributing guidelines, code of conduct, security policy, CI workflow, ESLint/Prettier/Vitest, `rustfmt`/Clippy, pinned sidecar SHA-256 downloads, and architecture docs.
 
+[0.4.0]: https://github.com/felipedssantos/mediakit/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/felipedssantos/mediakit/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/felipedssantos/mediakit/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/felipedssantos/mediakit/releases/tag/v0.1.0
