@@ -91,6 +91,7 @@ Watch in full quality: [MP4](https://github.com/felipedssantos/mediakit/releases
 
 - **System Tray**: Minimize or close to the Windows system tray and restore with a single click.
 - **Autostart**: Launches minimized to the tray on Windows startup (`--autostart`).
+- **In-App Auto-Updater**: Checks GitHub Releases on startup, verifies release signatures cryptographically, shows version details and release notes in an in-app banner, and downloads/installs updates with one click.
 - **Themes & Locales**: Light and Dark themes, with UI support for `English`, `Português (BR)`, `Português (PT)`, `Español`, and `Français`.
 
 ### Screenshot & Annotation
@@ -128,7 +129,7 @@ Download the installer for your OS from the [GitHub Releases](https://github.com
 2. _(Optional)_ Verify the SHA-256 checksum against `SHA256SUMS.txt` attached to the release:
 
 ```powershell
-Get-FileHash .\MediaKit_0.3.0_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\MediaKit_0.4.0_x64-setup.exe -Algorithm SHA256
 ```
 
 3. Run the installer and follow the setup wizard.
@@ -142,14 +143,14 @@ Get-FileHash .\MediaKit_0.3.0_x64-setup.exe -Algorithm SHA256
 
 ```bash
 sha256sum -c SHA256SUMS.txt --ignore-missing
-sudo apt install ./MediaKit_0.3.0_amd64.deb
+sudo apt install ./MediaKit_0.4.0_amd64.deb
 ```
 
 - **Portable (`.AppImage`)**:
 
 ```bash
-chmod +x MediaKit_0.3.0_amd64.AppImage
-./MediaKit_0.3.0_amd64.AppImage
+chmod +x MediaKit_0.4.0_amd64.AppImage
+./MediaKit_0.4.0_amd64.AppImage
 ```
 
 ## Quick Usage Guide
@@ -196,17 +197,25 @@ npm run tauri dev
 
 ## Production Build
 
-Make sure the sidecar binaries are present in `src-tauri/binaries/` (`ffmpeg:download` and `ytdlp:download`), then run:
+Make sure the sidecar binaries are present in `src-tauri/binaries/` (`ffmpeg:download` and `ytdlp:download`).
+
+> [!IMPORTANT]
+> **Mandatory Signing:** Every production release must be signed with the private key so the in-app automatic updater can verify and install updates.
+
+Set your private key and run the build:
 
 ```powershell
+$env:TAURI_SIGNING_PRIVATE_KEY = "$env:USERPROFILE\.tauri\mediakit.key"
 npm run tauri build
 ```
 
-The installers are generated at:
+The installers and signatures are generated at:
 
 ```text
 # Windows
 src-tauri/target/release/bundle/nsis/MediaKit_<version>_x64-setup.exe
+src-tauri/target/release/bundle/nsis/MediaKit_<version>_x64-setup.exe.sig
+src-tauri/target/release/bundle/nsis/latest.json
 
 # Linux
 src-tauri/target/release/bundle/deb/MediaKit_<version>_amd64.deb

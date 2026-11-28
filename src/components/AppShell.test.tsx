@@ -37,7 +37,7 @@ describe("AppShell navigation and theme", () => {
     expect(activeBtn.getAttribute("aria-current")).toBe("page");
     expect(screen.getByLabelText("3 active")).toBeTruthy();
     expect(screen.getByLabelText("1 active")).toBeTruthy();
-    expect(screen.getByText("v0.3.0 Beta")).toBeTruthy();
+    expect(screen.getByText("v0.4.0 Beta")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: /Download video/i }));
     expect(onSelect).toHaveBeenCalledWith("youtube");

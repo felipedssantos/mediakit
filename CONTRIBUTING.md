@@ -42,6 +42,25 @@ Thank you for your interest in contributing to MediaKit!
   - `hotfix/<name>` from `main` for urgent production fixes, merged back into both `main` and `develop`.
 - Keep PRs focused and small. Preserve existing behavior unless the change specifically targets a bug or an approved feature.
 
+## Release Process & Mandatory Signing
+
+Every production release **MUST** be cryptographically signed. The application uses Tauri's auto-updater (`@tauri-apps/plugin-updater`), which validates the signature of each update against the embedded public key before installing. Unsigned releases will fail to install on user machines.
+
+When building releases:
+1. Set the private key environment variable:
+   ```powershell
+   $env:TAURI_SIGNING_PRIVATE_KEY = "$env:USERPROFILE\.tauri\mediakit.key"
+   ```
+2. Build the signed bundles:
+   ```powershell
+   npm run tauri build
+   ```
+3. Upload all generated artifacts to the GitHub Release:
+   - Operating system installers (`MediaKit_<version>_x64-setup.exe`, `.deb`, `.AppImage`)
+   - Signature files (`.sig`)
+   - The `latest.json` updater manifest
+
+
 ## Pull Request Checklist
 
 Before opening a PR, make sure all checks pass:

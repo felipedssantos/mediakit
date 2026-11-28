@@ -494,6 +494,23 @@ export const ptBR = {
     ffprobeExeLabel: "Caminho do ffprobe",
     ytdlpExeLabel: "Caminho do yt-dlp",
   },
+  updater: {
+    badge: "Atualização",
+    bannerTitle: (version: string) => `MediaKit v${version} disponível`,
+    bannerBody:
+      "Baixe e instale a nova versão com assinatura verificada, sem sair do app.",
+    releasedOn: (date: string) => `Publicada em ${date}`,
+    verifiedLabel: "Assinatura verificada",
+    notesToggle: "Ver novidades",
+    notesHide: "Ocultar novidades",
+    updateButton: "Atualizar e reiniciar",
+    retryButton: "Tentar novamente",
+    downloadingButton: "Baixando...",
+    installingButton: "Instalando...",
+    downloading: "Baixando pacote de atualização",
+    installing: "Verificando assinatura e reiniciando...",
+    dismissLabel: "Fechar aviso de atualização",
+  },
 };
 
 export type Translations = typeof ptBR;
